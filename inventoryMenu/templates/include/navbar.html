@@ -26,13 +26,15 @@
         <div class = "nav-right">
 
             <!-- <img style = "width:25px; height:25px;"src="bell.png"> -->
-            <a href="#"><div class="img-div"></div></a>
+            <a href="#"><div class="bell-div"></div></a>
+
             <img style = "width:55px; height:55px; border-radius:100%;" src="{% static 'images/man-profile.png' %} ">
             <div>
 
-                <a  class = "" href="{% url 'profile'%}">Иванов И.</a>
-                <b class = "profile-role"> Роль:Сотрудник</b>
+                <a  class = "" href="{% url 'profile'%}">{{user_data.first_name}} {{user_data.last_name|first}}.</a>
+                <b class = "profile-role"> Роль:{{user_data.role}}</b>
             </div>
+            <a href="{% url 'logout' %}"><div class="logout-div"></div></a>
         </div>
 
     </div>

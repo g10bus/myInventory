@@ -84,7 +84,7 @@ nav {
     gap: 5px;
 }
 
-.img-div{
+.bell-div{
     width: 25px;
     height: 25px;
     border-radius: 100%;
@@ -95,8 +95,19 @@ nav {
     background-image: url('/static/images/bell.png');
 }
 
-.img-div:hover{
+.bell-div:hover{
     background-image: url('/static/images/bell-hover.png');
+}
+
+.logout-div{
+    width: 25px;
+    height: 25px;
+
+
+    background-size: cover;
+    background-position: center;
+
+    background-image: url('/static/images/log-out.png');
 }
 
 .profile-role{
