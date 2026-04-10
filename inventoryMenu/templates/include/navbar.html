@@ -9,10 +9,18 @@
         </div>
 
         <div class="nav-center">
-            <a  class = "nav-selected" href="#">Доска(Общее)</a>
-            <a  class = "nav-a" href="#">Мой ТМЦ</a>
-            <a  class = "nav-a" href="#">История</a>
-            <a  class = "nav-a" href="#">Обмены</a>
+            <a class="nav-a {% if request.path == '/home/' %}nav-selected{% endif %}"
+                href="{% url 'home' %}">Доска(Общее)</a>
+
+            <a class="nav-a {% if request.path == '/mytmc/' %}nav-selected{% endif %}"
+                href="{% url 'mytmc' %}">Мои ТМЦ</a>
+
+            <a class="nav-a {% if request.path == '/history/' %}nav-selected{% endif %}"
+                href="{% url 'history' %}">История</a>
+
+            <a class="nav-a {% if request.path == '/exchange/' %}nav-selected{% endif %}"
+                href="{% url 'exchange' %}">Обмены</a>
+
         </div>
 
         <div class = "nav-right">
@@ -22,7 +30,7 @@
             <img style = "width:55px; height:55px; border-radius:100%;" src="{% static 'images/man-profile.png' %} ">
             <div>
 
-                <a  class = "" href="#">Иванов И.</a>
+                <a  class = "" href="{% url 'profile'%}">Иванов И.</a>
                 <b class = "profile-role"> Роль:Сотрудник</b>
             </div>
         </div>
