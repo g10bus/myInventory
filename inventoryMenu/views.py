@@ -16,7 +16,8 @@ def auth_required(view_func):
 
         try:
             user_data = User.objects.get(pk=user_id)
-            request.user_data = user_data  # Добавляем данные пользователя в request
+            # остальные таблицы добавлять сюда, для того что бы их подключить
+            request.user_data = user_data
         except User.DoesNotExist:
             return redirect('login')
 
@@ -93,6 +94,27 @@ def user_login(request):
         email_get = request.POST["email"]
         password_get = request.POST["password"].encode()
 
+        print(email_get, password_get)
 
-        print( email_get, password_get)
+        try:
+            user = User.objects.get(email=email_get)
+            hash_user_password = user.password
+            user_password_salt = bytes.fromhex(user.salt_password)
+
+            hash_get_password = hashlib.pbkdf2_hmac('sha256', password_get, user_password_salt, 100000)
+
+            if secrets.compare_digest(hash_user_password, hash_get_password.hex()):
+                print("succes")
+                request.session['user_id'] = user.id
+                request.session['user_email'] = user.email
+
+
+                return redirect('home')
+            else:
+                pass # сделать уведу о неверных данных
+        except User.DoesNotExist:
+            pass # сделать уведу о неверных данных
+
+
+
     return render(request, "login.html")
