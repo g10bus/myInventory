@@ -12,6 +12,6 @@ urlpatterns = [
     path('exchange/', views.exchange, name='exchange'),
     path('profile/', views.profile, name='profile'),
     path('login/', views.login, name='login'),
-    path('registration/', views.registr, name='register'),
+    path('registration/', views.reg, name='register'),
 
 ]
