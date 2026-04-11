@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}История{% endblock %}
+
+{% block content %}
+<section class="hero-card hero-card-compact">
+    <div>
+        <p class="eyebrow">Журнал действий</p>
+        <h1>История закрепления и передачи ТМЦ</h1>
+        <p class="hero-copy">
+            Лента показывает, какие материальные ценности были закреплены за сотрудником, возвращены или переданы между подразделениями.
+        </p>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="timeline">
+        {% for item in activity_feed %}
+            <article class="timeline-item">
+                <div class="timeline-date">
+                    <strong>{{ item.occurred_at|date:"d.m.Y" }}</strong>
+                    <span>{{ item.occurred_at|date:"H:i" }}</span>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-head">
+                        <div>
+                            <h3>{{ item.asset.title|default:"Событие системы" }}</h3>
+                            <p>{{ item.asset.inventory_number|default:item.get_event_type_display }}</p>
+                        </div>
+                        <span class="status-badge">{{ item.get_event_type_display }}</span>
+                    </div>
+                    <p>{{ item.message|default:"Описание не указано" }}</p>
+                    <span class="timeline-status">
+                        {% if item.actor %}Инициатор: {{ item.actor.short_name }}{% else %}Системное действие{% endif %}
+                    </span>
+                </div>
+            </article>
+        {% empty %}
+            <div class="empty-state">
+                <h3>История пока пуста</h3>
+                <p>Как только начнут оформляться выдачи и передачи ТМЦ, они появятся в журнале.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

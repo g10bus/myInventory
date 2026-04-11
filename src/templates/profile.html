@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль{% endblock %}
+
+{% block content %}
+<section class="hero-card hero-card-compact">
+    <div>
+        <p class="eyebrow">Карточка сотрудника</p>
+        <h1>{{ user_data.full_name|default:user_data.email }}</h1>
+        <p class="hero-copy">
+            Профиль показывает текущие реквизиты сотрудника, подразделение и закрепленные за ним материальные ценности.
+        </p>
+    </div>
+    <div class="profile-avatar-block">
+        <div class="profile-avatar">{{ user_data.initial|upper }}</div>
+    </div>
+</section>
+
+<section class="summary-strip">
+    <article class="summary-card">
+        <span class="summary-label">Должность</span>
+        <strong>{{ user_data.position|default:"Не указана" }}</strong>
+    </article>
+    <article class="summary-card">
+        <span class="summary-label">Отдел</span>
+        <strong>{{ user_data.department.name|default:"Не указан" }}</strong>
+    </article>
+    <article class="summary-card">
+        <span class="summary-label">Локация</span>
+        <strong>{{ user_data.office_location|default:"Не указана" }}</strong>
+    </article>
+    <article class="summary-card">
+        <span class="summary-label">Передач оформлено</span>
+        <strong>{{ transfer_count }}</strong>
+    </article>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Контактные данные</p>
+                <h2>Паспорт сотрудника</h2>
+            </div>
+        </div>
+        <div class="details-grid">
+            <div class="detail-item">
+                <span>Email</span>
+                <strong>{{ user_data.email }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Телефон</span>
+                <strong>{{ user_data.phone|default:"Не указан" }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Роль</span>
+                <strong>{{ user_data.role }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Создан</span>
+                <strong>{{ user_data.created_at|date:"d.m.Y H:i" }}</strong>
+            </div>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Закреплено сейчас</p>
+                <h2>Активные ТМЦ</h2>
+            </div>
+            <span class="pill">{{ current_assignments|length }}</span>
+        </div>
+        <div class="list-stack">
+            {% for assignment in current_assignments %}
+                <div class="list-item">
+                    <div>
+                        <strong>{{ assignment.asset.title }}</strong>
+                        <p>{{ assignment.asset.model_name|default:assignment.asset.category }}</p>
+                    </div>
+                    <div class="list-item-meta">
+                        <span>{{ assignment.asset.inventory_number }}</span>
+                        <span class="status-badge status-{{ assignment.asset.status }}">{{ assignment.asset.get_status_display }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>ТМЦ пока не закреплены</h3>
+                    <p>После выдачи имущества оно появится в этой карточке автоматически.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

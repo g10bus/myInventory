@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Обзор{% endblock %}
+
+{% block content %}
+<section class="hero-card">
+    <div>
+        <p class="eyebrow">Панель сотрудника</p>
+        <h1>Инвентаризация закрепленных материальных ценностей</h1>
+        <p class="hero-copy">
+            Контролируйте, какое оборудование закреплено за сотрудником, что требует сверки, а какие передачи сейчас находятся в работе.
+        </p>
+    </div>
+    <div class="hero-side-note">
+        <span>Текущий сотрудник</span>
+        <strong>{{ user_data.full_name|default:user_data.email }}</strong>
+        <p>{{ user_data.position|default:"Должность не указана" }}</p>
+    </div>
+</section>
+
+<section class="stats-grid">
+    {% for stat in stats_cards %}
+        <article class="stat-card">
+            <span class="stat-label">{{ stat.label }}</span>
+            <strong>{{ stat.value }}</strong>
+            <p>{{ stat.hint }}</p>
+        </article>
+    {% endfor %}
+</section>
+
+<section class="summary-strip">
+    {% for item in overall_summary %}
+        <article class="summary-card">
+            <span class="summary-label">{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+        </article>
+    {% endfor %}
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Сверка</p>
+                <h2>Ближайшие контрольные даты</h2>
+            </div>
+        </div>
+        <div class="list-stack">
+            {% for asset in upcoming_verifications %}
+                <div class="list-item">
+                    <div>
+                        <strong>{{ asset.title }}</strong>
+                        <p>{{ asset.inventory_number }} • {{ asset.location|default:"Локация не указана" }}</p>
+                    </div>
+                    <div class="list-item-meta">
+                        <span>{{ asset.next_verification_date|date:"d.m.Y" }}</span>
+                        <span class="status-badge status-{{ asset.status }}">{{ asset.get_status_display }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>Все спокойно</h3>
+                    <p>Для текущего сотрудника нет ТМЦ с контрольной датой сверки.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Передачи</p>
+                <h2>Последние изменения</h2>
+            </div>
+        </div>
+        <div class="list-stack">
+            {% for transfer in recent_transfers %}
+                <div class="list-item">
+                    <div>
+                        <strong>{{ transfer.asset.title }}</strong>
+                        <p>{{ transfer.from_employee.short_name }} -> {{ transfer.to_employee.short_name }}</p>
+                    </div>
+                    <div class="list-item-meta">
+                        <span>{{ transfer.processed_at|default:transfer.requested_at|date:"d.m.Y H:i" }}</span>
+                        <span class="status-badge status-{{ transfer.status }}">{{ transfer.get_status_display }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>Пока без передач</h3>
+                    <p>Когда начнут оформляться перемещения ТМЦ между сотрудниками, они появятся здесь.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Подборка</p>
+            <h2>ТМЦ, закрепленные за сотрудником</h2>
+        </div>
+        <a class="ghost-link" href="{% url 'mytmc' %}">Открыть полный список</a>
+    </div>
+    <div class="asset-grid">
+        {% for asset in user_assets %}
+            <article class="asset-card">
+                <div class="asset-card-top">
+                    <span class="pill">{{ asset.category }}</span>
+                    <span class="status-badge status-{{ asset.status }}">{{ asset.get_status_display }}</span>
+                </div>
+                <h3>{{ asset.title }}</h3>
+                <p>{{ asset.model_name|default:"Модель не указана" }}</p>
+                <dl class="asset-meta">
+                    <div>
+                        <dt>Инв. номер</dt>
+                        <dd>{{ asset.inventory_number }}</dd>
+                    </div>
+                    <div>
+                        <dt>Локация</dt>
+                        <dd>{{ asset.location|default:"Не указана" }}</dd>
+                    </div>
+                </dl>
+            </article>
+        {% empty %}
+            <div class="empty-state">
+                <h3>Нет закрепленных ТМЦ</h3>
+                <p>После назначения имущества карточки появятся в этом блоке автоматически.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

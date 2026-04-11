@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Передачи{% endblock %}
+
+{% block content %}
+<section class="hero-card hero-card-compact">
+    <div>
+        <p class="eyebrow">Передача имущества</p>
+        <h1>Запросы на передачу ТМЦ между сотрудниками</h1>
+        <p class="hero-copy">
+            Создавайте заявки на передачу оборудования, отслеживайте их статус и подтверждайте входящие перемещения прямо из интерфейса.
+        </p>
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Новая заявка</p>
+                <h2>Передать ТМЦ</h2>
+            </div>
+        </div>
+        <form class="form-grid" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_transfer">
+            <label class="field-group">
+                <span>ТМЦ</span>
+                <select class="select-input" name="asset_id" required>
+                    <option value="">Выберите позицию</option>
+                    {% for asset in current_assets %}
+                        <option value="{{ asset.id }}">{{ asset.title }} • {{ asset.inventory_number }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field-group">
+                <span>Получатель</span>
+                <select class="select-input" name="recipient_id" required>
+                    <option value="">Выберите сотрудника</option>
+                    {% for colleague in colleagues %}
+                        <option value="{{ colleague.id }}">{{ colleague.full_name|default:colleague.email }} • {{ colleague.department.name|default:"Без отдела" }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="field-group field-group-full">
+                <span>Комментарий</span>
+                <textarea class="textarea-input" name="comment" rows="4" placeholder="Например: временная замена оборудования на период ремонта."></textarea>
+            </label>
+            <button class="primary-button" type="submit">Создать заявку</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Входящие заявки</p>
+                <h2>Ожидают решения</h2>
+            </div>
+        </div>
+        <div class="list-stack">
+            {% for transfer in incoming_requests %}
+                <div class="request-card">
+                    <div class="request-card-head">
+                        <div>
+                            <strong>{{ transfer.asset.title }}</strong>
+                            <p>{{ transfer.asset.inventory_number }} • от {{ transfer.from_employee.short_name }}</p>
+                        </div>
+                        <span class="status-badge status-{{ transfer.status }}">{{ transfer.get_status_display }}</span>
+                    </div>
+                    <p>{{ transfer.comment|default:"Комментарий не указан." }}</p>
+                    <span class="muted-text">{{ transfer.requested_at|date:"d.m.Y H:i" }}</span>
+                    {% if transfer.status == "pending" %}
+                        <div class="actions-row">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="process_transfer">
+                                <input type="hidden" name="transfer_id" value="{{ transfer.id }}">
+                                <input type="hidden" name="decision" value="approve">
+                                <button class="primary-button" type="submit">Подтвердить</button>
+                            </form>
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="process_transfer">
+                                <input type="hidden" name="transfer_id" value="{{ transfer.id }}">
+                                <input type="hidden" name="decision" value="reject">
+                                <button class="secondary-button" type="submit">Отклонить</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>Нет входящих запросов</h3>
+                    <p>Когда коллеги передадут вам оборудование, заявки появятся здесь.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Исходящие заявки</p>
+            <h2>Вы отправили</h2>
+        </div>
+    </div>
+    <div class="list-stack">
+        {% for transfer in outgoing_requests %}
+            <div class="list-item">
+                <div>
+                    <strong>{{ transfer.asset.title }}</strong>
+                    <p>{{ transfer.asset.inventory_number }} • получатель: {{ transfer.to_employee.short_name }}</p>
+                </div>
+                <div class="list-item-meta">
+                    <span>{{ transfer.requested_at|date:"d.m.Y H:i" }}</span>
+                    <span class="status-badge status-{{ transfer.status }}">{{ transfer.get_status_display }}</span>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">
+                <h3>Пока нет исходящих заявок</h3>
+                <p>Используйте форму выше, чтобы оформить новую передачу оборудования.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

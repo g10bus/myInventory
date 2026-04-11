@@ -1,0 +1,31 @@
+{% load static %}
+
+<nav class="topbar">
+    <div class="nav-container">
+        <a class="nav-brand" href="{% url 'home' %}">
+            <img src="{% static 'images/logo-box.png' %}" alt="Логотип">
+            <div>
+                <strong>МОЙ.ИНВЕНТАРЬ</strong>
+                <span>Учёт ТМЦ по сотрудникам</span>
+            </div>
+        </a>
+
+        <div class="nav-center">
+            <a class="nav-a {% if request.resolver_match.url_name == 'home' %}nav-selected{% endif %}" href="{% url 'home' %}">Обзор</a>
+            <a class="nav-a {% if request.resolver_match.url_name == 'mytmc' %}nav-selected{% endif %}" href="{% url 'mytmc' %}">Мои ТМЦ</a>
+            <a class="nav-a {% if request.resolver_match.url_name == 'history' %}nav-selected{% endif %}" href="{% url 'history' %}">История</a>
+            <a class="nav-a {% if request.resolver_match.url_name == 'exchange' %}nav-selected{% endif %}" href="{% url 'exchange' %}">Передачи</a>
+        </div>
+
+        <div class="nav-right">
+            <a class="profile-chip" href="{% url 'profile' %}">
+                <div class="profile-chip-avatar">{{ user_data.initial|upper }}</div>
+                <div>
+                    <strong>{{ user_data.short_name }}</strong>
+                    <span>{{ user_data.department.name|default:"Без отдела" }} • {{ user_data.role }}</span>
+                </div>
+            </a>
+            <a class="logout-link" href="{% url 'logout' %}">Выйти</a>
+        </div>
+    </div>
+</nav>

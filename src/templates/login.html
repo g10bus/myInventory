@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/login.css' %}">
+    <link rel="shortcut icon" href="{% static 'images/logo-box.png' %}" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-shell">
+        <section class="auth-card">
+            <div class="auth-brand">
+                <img src="{% static 'images/box.png' %}" alt="Логотип">
+                <div>
+                    <h1>МОЙ.ИНВЕНТАРЬ</h1>
+                    <p>Учет материальных ценностей, закрепленных за сотрудниками предприятия.</p>
+                </div>
+            </div>
+
+            {% if messages or form.non_field_errors %}
+                <div class="auth-messages">
+                    {% for message in messages %}
+                        <div class="auth-message">{{ message }}</div>
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <div class="auth-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form class="auth-form" method="post">
+                {% csrf_token %}
+                <label>
+                    <span>Email</span>
+                    <input type="email" name="email" value="{{ form.email.value|default:'' }}" placeholder="example@company.ru" required>
+                </label>
+                <label>
+                    <span>Пароль</span>
+                    <input type="password" name="password" placeholder="Введите пароль" required>
+                </label>
+                <button class="auth-button" type="submit">Войти в систему</button>
+            </form>
+
+            <div class="auth-footer">
+                <span>Новый сотрудник?</span>
+                <a href="{% url 'register' %}">Создать профиль</a>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/register.css' %}">
+    <link rel="shortcut icon" href="{% static 'images/logo-box.png' %}" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-shell">
+        <section class="auth-card">
+            <div class="auth-brand">
+                <img src="{% static 'images/box.png' %}" alt="Логотип">
+                <div>
+                    <h1>Создание профиля</h1>
+                    <p>После регистрации сотрудник сразу получит персональную панель и стартовые данные для работы с инвентарем.</p>
+                </div>
+            </div>
+
+            {% if messages or form.errors %}
+                <div class="auth-messages">
+                    {% for message in messages %}
+                        <div class="auth-message">{{ message }}</div>
+                    {% endfor %}
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <div class="auth-message">{{ error }}</div>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <div class="auth-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form class="auth-form" method="post">
+                {% csrf_token %}
+                <label>
+                    <span>Корпоративная почта</span>
+                    <input type="email" name="email" value="{{ form.email.value|default:'' }}" placeholder="employee@company.ru" required>
+                </label>
+                <label>
+                    <span>ФИО</span>
+                    <input type="text" name="full_name" value="{{ form.full_name.value|default:'' }}" placeholder="Иванов Иван Иванович" required>
+                </label>
+                <label>
+                    <span>Телефон</span>
+                    <input type="text" name="phone" value="{{ form.phone.value|default:'' }}" placeholder="+7 900 000-00-00" required>
+                </label>
+                <label>
+                    <span>Пароль</span>
+                    <input type="password" name="password1" placeholder="Не менее 8 символов" required>
+                </label>
+                <label>
+                    <span>Повторите пароль</span>
+                    <input type="password" name="password2" placeholder="Повторите пароль" required>
+                </label>
+                <button class="auth-button" type="submit">Зарегистрироваться</button>
+            </form>
+
+            <div class="auth-footer">
+                <span>Уже есть учетная запись?</span>
+                <a href="{% url 'login' %}">Перейти ко входу</a>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
