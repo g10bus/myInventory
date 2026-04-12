@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Добавление ТМЦ{% endblock %}
+
+{% block content %}
+<section class="hero-card">
+    <div>
+        <p class="eyebrow">Панель администратора</p>
+        <h1>Новая карточка предмета</h1>
+        <p class="hero-copy">
+            Заполните карточку нового предмета: наименование, категорию, инвентарный номер, статус,
+            локацию и даты сверки. После сохранения предмет появится в общем реестре ТМЦ.
+        </p>
+    </div>
+    <div class="hero-side-note">
+        <span>Назначение</span>
+        <strong>Создание нового предмета</strong>
+        <p>После создания карточки предмет можно будет закрепить за сотрудником и редактировать дальше.</p>
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Создание</p>
+                <h2>Параметры предмета</h2>
+            </div>
+            <a class="ghost-link" href="{% url 'asset-admin' %}">К списку</a>
+        </div>
+        <form class="form-grid profile-settings-form" method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <label class="field-group {% if field.name == 'notes' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <button class="primary-button" type="submit">Создать карточку</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Контекст</p>
+                <h2>Что будет доступно после создания</h2>
+            </div>
+        </div>
+        <div class="details-grid">
+            <div class="detail-item">
+                <span>Редактирование</span>
+                <strong>Карточка появится в админ-реестре</strong>
+            </div>
+            <div class="detail-item">
+                <span>Закрепление</span>
+                <strong>Предмет можно будет выдать сотруднику</strong>
+            </div>
+            <div class="detail-item">
+                <span>Статус</span>
+                <strong>Вы задаёте его при создании</strong>
+            </div>
+            <div class="detail-item">
+                <span>Аудит</span>
+                <strong>Создание фиксируется в журнале событий</strong>
+            </div>
+        </div>
+    </article>
+</section>
+{% endblock %}

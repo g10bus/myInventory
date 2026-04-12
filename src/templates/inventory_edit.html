@@ -6,16 +6,18 @@
 <section class="hero-card">
     <div>
         <p class="eyebrow">Управление карточкой</p>
-        <h1>{{ asset.title }}</h1>
+        <h1>{% if create_mode %}Новая карточка ТМЦ{% else %}{{ asset.title }}{% endif %}</h1>
         <p class="hero-copy">
             Обновите статус, локацию, даты сверки и другие атрибуты карточки оборудования.
         </p>
     </div>
     <div class="hero-side-note">
         <span>Инвентарный номер</span>
-        <strong>{{ asset.inventory_number }}</strong>
+        <strong>{{ asset.inventory_number|default:"Будет присвоен после сохранения" }}</strong>
         <p>
-            {% if current_assignment %}
+            {% if create_mode %}
+                После создания карточки предмет можно будет закрепить за сотрудником.
+            {% elif current_assignment %}
                 Закреплено за {{ current_assignment.employee.short_name }}
             {% else %}
                 Сейчас не закреплено за сотрудником

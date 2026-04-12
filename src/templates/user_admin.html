@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Управление сотрудниками{% endblock %}
+
+{% block content %}
+<section class="hero-card hero-card-compact">
+    <div>
+        <p class="eyebrow">Панель администратора</p>
+        <h1>Сотрудники и их данные</h1>
+        <p class="hero-copy">
+            Здесь администратор может найти любого пользователя, посмотреть его профиль, отдел,
+            количество закреплённых ТМЦ и перейти к редактированию данных сотрудника.
+        </p>
+    </div>
+</section>
+
+<section class="panel">
+    <form class="filters-row" method="get">
+        <input class="text-input" type="text" name="q" placeholder="Поиск по email, ФИО, телефону, отделу или должности" value="{{ query }}">
+        <button class="primary-button" type="submit">Найти</button>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Реестр</p>
+            <h2>Список сотрудников</h2>
+        </div>
+        <span class="pill">{{ users|length }} чел.</span>
+    </div>
+    <div class="table-shell">
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Сотрудник</th>
+                    <th>Отдел</th>
+                    <th>Должность</th>
+                    <th>Роль</th>
+                    <th>ТМЦ</th>
+                    <th>Статус</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in users %}
+                    <tr>
+                        <td>{{ employee.email }}</td>
+                        <td>
+                            <strong>{{ employee.full_name|default:employee.email }}</strong>
+                            <div class="table-muted">{{ employee.phone|default:"Телефон не указан" }}</div>
+                        </td>
+                        <td>{{ employee.department.name|default:"Без отдела" }}</td>
+                        <td>{{ employee.position|default:"Не указана" }}</td>
+                        <td>{{ employee.role }}</td>
+                        <td>{{ employee.current_assets_count }}</td>
+                        <td>
+                            {% if employee.is_active %}
+                                <span class="status-badge status-in_use">Активен</span>
+                            {% else %}
+                                <span class="status-badge status-broken">Отключен</span>
+                            {% endif %}
+                        </td>
+                        <td class="table-actions">
+                            <a class="ghost-link" href="{% url 'user-edit' employee.id %}">Редактировать</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <h3>Сотрудники не найдены</h3>
+                                <p>Измените поисковый запрос.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

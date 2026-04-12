@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.inventory.forms import AssetAdminForm
 from apps.inventory.models import Asset
-from apps.inventory.services import update_asset_details
+from apps.inventory.services import create_asset, update_asset_details
 
 from ..selectors import get_all_assets, get_user_assets
 
@@ -53,6 +53,31 @@ def asset_admin_view(request):
 
 
 @login_required
+def asset_create_view(request):
+    ensure_administrator(request.user)
+    form = AssetAdminForm(request.POST or None)
+
+    if request.method == "POST":
+        if form.is_valid():
+            asset = create_asset(actor=request.user, data=form.cleaned_data)
+            messages.success(request, "Карточка оборудования создана.")
+            return redirect("asset-edit", asset_id=asset.id)
+        messages.error(request, "Не удалось создать карточку оборудования. Проверьте форму.")
+
+    return render(
+        request,
+        "inventory_create.html",
+        {
+            "user_data": request.user,
+            "asset": form.instance,
+            "form": form,
+            "current_assignment": None,
+            "create_mode": True,
+        },
+    )
+
+
+@login_required
 def asset_edit_view(request, asset_id):
     ensure_administrator(request.user)
     asset = get_object_or_404(get_all_assets(), pk=asset_id)
@@ -81,5 +106,6 @@ def asset_edit_view(request, asset_id):
             "asset": asset,
             "form": form,
             "current_assignment": asset.current_assignment,
+            "create_mode": False,
         },
     )

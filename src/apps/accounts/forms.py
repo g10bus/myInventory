@@ -117,3 +117,85 @@ class StyledPasswordChangeForm(PasswordChangeForm):
                     "class": "text-input",
                 }
             )
+
+
+class UserAdminManageForm(forms.ModelForm):
+    remove_avatar = forms.BooleanField(required=False, label="Удалить текущий аватар")
+
+    class Meta:
+        model = User
+        fields = (
+            "email",
+            "avatar",
+            "last_name",
+            "first_name",
+            "middle_name",
+            "phone",
+            "role",
+            "position",
+            "office_location",
+            "department",
+            "is_active",
+            "is_staff",
+            "is_superuser",
+        )
+        widgets = {
+            "email": forms.EmailInput(attrs={"class": "text-input"}),
+            "avatar": forms.FileInput(attrs={"class": "text-input", "accept": "image/*"}),
+            "last_name": forms.TextInput(attrs={"class": "text-input"}),
+            "first_name": forms.TextInput(attrs={"class": "text-input"}),
+            "middle_name": forms.TextInput(attrs={"class": "text-input"}),
+            "phone": forms.TextInput(attrs={"class": "text-input"}),
+            "role": forms.TextInput(attrs={"class": "text-input"}),
+            "position": forms.TextInput(attrs={"class": "text-input"}),
+            "office_location": forms.TextInput(attrs={"class": "text-input"}),
+            "department": forms.Select(attrs={"class": "select-input"}),
+        }
+        labels = {
+            "email": "Email",
+            "avatar": "Аватар",
+            "last_name": "Фамилия",
+            "first_name": "Имя",
+            "middle_name": "Отчество",
+            "phone": "Телефон",
+            "role": "Роль",
+            "position": "Должность",
+            "office_location": "Локация",
+            "department": "Отдел",
+            "is_active": "Активный пользователь",
+            "is_staff": "Доступ к staff-функциям",
+            "is_superuser": "Полный доступ суперпользователя",
+        }
+
+    def __init__(self, *args, actor=None, **kwargs):
+        self.actor = actor
+        super().__init__(*args, **kwargs)
+        self.fields["avatar"].required = False
+
+        if not actor or not actor.is_superuser:
+            self.fields.pop("is_staff", None)
+            self.fields.pop("is_superuser", None)
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].lower()
+        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Пользователь с такой почтой уже существует.")
+        return email
+
+    def save(self, commit=True):
+        existing_avatar = None
+        if self.instance.pk:
+            existing_avatar = type(self.instance).objects.get(pk=self.instance.pk).avatar
+
+        remove_avatar = self.cleaned_data.get("remove_avatar")
+        new_avatar = self.cleaned_data.get("avatar")
+
+        if remove_avatar and existing_avatar:
+            existing_avatar.delete(save=False)
+            self.instance.avatar = None
+        elif new_avatar and existing_avatar and existing_avatar.name != new_avatar.name:
+            existing_avatar.delete(save=False)
+
+        self.instance.email = self.cleaned_data["email"].lower()
+        self.instance.username = self.instance.email
+        return super().save(commit=commit)

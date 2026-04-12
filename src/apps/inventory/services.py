@@ -4,6 +4,18 @@ from apps.audit.services import log_event
 from apps.inventory.models import Asset
 
 
+def create_asset(*, actor, data):
+    asset = Asset.objects.create(**data)
+    log_event(
+        event_type="asset_updated",
+        actor=actor,
+        asset=asset,
+        message=f"Создана карточка ТМЦ '{asset.title}'.",
+        metadata={"created": True},
+    )
+    return asset
+
+
 def record_verification(*, asset, actor, next_verification_date=None, note=""):
     asset.last_verified_at = timezone.localdate()
     asset.next_verification_date = next_verification_date

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование сотрудника{% endblock %}
+
+{% block content %}
+<section class="hero-card">
+    <div>
+        <p class="eyebrow">Управление профилем</p>
+        <h1>{{ managed_user.full_name|default:managed_user.email }}</h1>
+        <p class="hero-copy">
+            Администратор может обновить контакты, должность, отдел, активность и права сотрудника.
+        </p>
+    </div>
+    <div class="hero-side-note">
+        <span>Email</span>
+        <strong>{{ managed_user.email }}</strong>
+        <p>{{ managed_user.position|default:managed_user.role }}</p>
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Редактирование</p>
+                <h2>Параметры сотрудника</h2>
+            </div>
+            <a class="ghost-link" href="{% url 'user-admin' %}">К списку</a>
+        </div>
+        <form class="form-grid profile-settings-form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+                <label class="field-group {% if field.name == 'avatar' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <button class="primary-button" type="submit">Сохранить изменения</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Контекст</p>
+                <h2>Текущие данные</h2>
+            </div>
+        </div>
+        <div class="details-grid">
+            <div class="detail-item">
+                <span>Отдел</span>
+                <strong>{{ managed_user.department.name|default:"Без отдела" }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Локация</span>
+                <strong>{{ managed_user.office_location|default:"Не указана" }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Роль</span>
+                <strong>{{ managed_user.role }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Статус</span>
+                <strong>{% if managed_user.is_active %}Активный{% else %}Отключен{% endif %}</strong>
+            </div>
+        </div>
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Закреплено</p>
+                <h2>Текущие ТМЦ</h2>
+            </div>
+            <span class="pill">{{ current_assignments|length }}</span>
+        </div>
+        <div class="list-stack">
+            {% for assignment in current_assignments %}
+                <div class="list-item">
+                    <div>
+                        <strong>{{ assignment.asset.title }}</strong>
+                        <p>{{ assignment.asset.inventory_number }} • {{ assignment.asset.category }}</p>
+                    </div>
+                    <div class="list-item-meta">
+                        <span>{{ assignment.assigned_at|date:"d.m.Y H:i" }}</span>
+                        <span class="status-badge status-{{ assignment.asset.status }}">{{ assignment.asset.get_status_display }}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>ТМЦ не закреплены</h3>
+                    <p>Здесь будут показаны активные назначения по имуществу.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}
