@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Управление оборудованием{% endblock %}
+
+{% block content %}
+<section class="hero-card hero-card-compact">
+    <div>
+        <p class="eyebrow">Панель администратора</p>
+        <h1>Все оборудование предприятия</h1>
+        <p class="hero-copy">
+            Здесь администратор видит полный список ТМЦ, может фильтровать его и переходить к редактированию статусов и карточек оборудования.
+        </p>
+    </div>
+</section>
+
+<section class="panel">
+    <form class="filters-row" method="get">
+        <input class="text-input" type="text" name="q" placeholder="Поиск по названию, номеру, модели или локации" value="{{ query }}">
+        <select class="select-input" name="status">
+            <option value="">Все статусы</option>
+            {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button class="primary-button" type="submit">Применить</button>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Реестр</p>
+            <h2>Таблица оборудования</h2>
+        </div>
+        <span class="pill">{{ assets|length }} поз.</span>
+    </div>
+    <div class="table-shell">
+        <table class="inventory-table">
+            <thead>
+                <tr>
+                    <th>Инв. номер</th>
+                    <th>Оборудование</th>
+                    <th>Категория</th>
+                    <th>Статус</th>
+                    <th>Сотрудник</th>
+                    <th>Локация</th>
+                    <th>Сверка</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for asset in assets %}
+                    <tr>
+                        <td>{{ asset.inventory_number }}</td>
+                        <td>
+                            <strong>{{ asset.title }}</strong>
+                            <div class="table-muted">{{ asset.model_name|default:"Модель не указана" }}</div>
+                        </td>
+                        <td>{{ asset.category }}</td>
+                        <td>
+                            <span class="status-badge status-{{ asset.status }}">{{ asset.get_status_display }}</span>
+                        </td>
+                        <td>
+                            {% if asset.current_assignment %}
+                                {{ asset.current_assignment.employee.short_name }}
+                            {% else %}
+                                <span class="table-muted">Не закреплено</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ asset.location|default:"Не указана" }}</td>
+                        <td>{{ asset.next_verification_date|date:"d.m.Y"|default:"Не задана" }}</td>
+                        <td class="table-actions">
+                            <a class="ghost-link" href="{% url 'asset-edit' asset.id %}">Редактировать</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <h3>Оборудование не найдено</h3>
+                                <p>Измените фильтры или добавьте ТМЦ через административный контур.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
