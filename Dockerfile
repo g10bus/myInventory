@@ -19,6 +19,7 @@ COPY requirements/base.in requirements/prod.in /app/requirements/
 RUN pip install --no-cache-dir --timeout 120 -r /app/requirements/prod.txt
 
 COPY . /app
+RUN sed -i 's/\r$//' /app/docker/entrypoint.sh
 RUN chmod +x /app/docker/entrypoint.sh
 
 ENTRYPOINT ["/app/docker/entrypoint.sh"]
