@@ -4,6 +4,7 @@
 ![Django](https://img.shields.io/badge/Django-5.2-092E20?logo=django&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![CI](https://github.com/g10bus/myInventory/actions/workflows/ci.yml/badge.svg)
 ![Status](https://img.shields.io/badge/status-production--only-2ea44f)
 
 Внутренняя Django-система для учета материальных ценностей предприятия, закрепленных за сотрудниками.

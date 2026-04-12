@@ -2,6 +2,7 @@
 set -e
 
 mkdir -p /app/var/static /app/var/media
+echo "entrypoint: settings=${DJANGO_SETTINGS_MODULE:-unset} database_url=${DATABASE_URL:-unset}"
 
 python - <<'PY'
 import os
@@ -11,6 +12,7 @@ import psycopg
 
 database_url = os.environ.get("DATABASE_URL")
 if not database_url:
+    print("entrypoint: DATABASE_URL is not set; skipping DB wait")
     raise SystemExit(0)
 
 for attempt in range(30):
