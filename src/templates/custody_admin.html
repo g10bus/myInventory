@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Движение ТМЦ{% endblock %}
+
+{% block content %}
+<section class="hero-card hero-card-compact">
+    <div>
+        <p class="eyebrow">Контур движения ТМЦ</p>
+        <h1>Выдача, возврат и передача оборудования</h1>
+        <p class="hero-copy">
+            Администратор может закреплять ТМЦ за сотрудниками, оформлять передачи, подтверждать или отклонять заявки и принимать оборудование обратно в резерв.
+        </p>
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Выдача</p>
+                <h2>Закрепить ТМЦ за сотрудником</h2>
+            </div>
+        </div>
+        <form class="form-grid" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="issue_asset">
+            {% for field in issue_form %}
+                <label class="field-group {% if field.name == 'note' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in issue_form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <button class="primary-button" type="submit">Выдать ТМЦ</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Передача</p>
+                <h2>Оформить передачу между сотрудниками</h2>
+            </div>
+        </div>
+        <form class="form-grid" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_admin_transfer">
+            {% for field in transfer_form %}
+                <label class="field-group {% if field.name == 'comment' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in transfer_form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <button class="primary-button" type="submit">Оформить передачу</button>
+        </form>
+    </article>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Возврат</p>
+                <h2>Принять ТМЦ обратно</h2>
+            </div>
+        </div>
+        <form class="form-grid" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="return_asset">
+            {% for field in return_form %}
+                <label class="field-group {% if field.name == 'note' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in return_form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <button class="secondary-button" type="submit">Оформить возврат</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Сводка</p>
+                <h2>Текущее состояние контура</h2>
+            </div>
+        </div>
+        <div class="details-grid">
+            <div class="detail-item">
+                <span>Активные закрепления</span>
+                <strong>{{ current_assignments|length }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Заявки на согласовании</span>
+                <strong>{{ pending_transfers|length }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Недавние передачи</span>
+                <strong>{{ recent_transfers|length }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Режим работы</span>
+                <strong>Административный</strong>
+            </div>
+        </div>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Активные закрепления</p>
+            <h2>Кто сейчас отвечает за оборудование</h2>
+        </div>
+        <span class="pill">{{ current_assignments|length }}</span>
+    </div>
+    <div class="list-stack">
+        {% for assignment in current_assignments %}
+            <div class="list-item">
+                <div>
+                    <strong>{{ assignment.asset.title }}</strong>
+                    <p>
+                        {{ assignment.asset.inventory_number }} • {{ assignment.employee.full_name|default:assignment.employee.email }}
+                        • {{ assignment.employee.department.name|default:"Без отдела" }}
+                    </p>
+                </div>
+                <div class="list-item-meta">
+                    <span>{{ assignment.assigned_at|date:"d.m.Y H:i" }}</span>
+                    <span class="status-badge status-{{ assignment.asset.status }}">{{ assignment.asset.get_status_display }}</span>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">
+                <h3>Нет активных закреплений</h3>
+                <p>После выдачи оборудования сотрудникам список появится здесь.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Заявки на передачу</p>
+            <h2>Подтверждение и отклонение</h2>
+        </div>
+    </div>
+    <div class="list-stack">
+        {% for transfer in pending_transfers %}
+            <div class="request-card">
+                <div class="request-card-head">
+                    <div>
+                        <strong>{{ transfer.asset.title }}</strong>
+                        <p>
+                            {{ transfer.asset.inventory_number }} • {{ transfer.from_employee.short_name }}
+                            → {{ transfer.to_employee.short_name }}
+                        </p>
+                    </div>
+                    <span class="status-badge status-{{ transfer.status }}">{{ transfer.get_status_display }}</span>
+                </div>
+                <p>{{ transfer.comment|default:"Комментарий не указан." }}</p>
+                <span class="muted-text">{{ transfer.requested_at|date:"d.m.Y H:i" }}</span>
+                <div class="actions-row">
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="process_transfer">
+                        <input type="hidden" name="transfer_id" value="{{ transfer.id }}">
+                        <input type="hidden" name="decision" value="approve">
+                        <button class="primary-button" type="submit">Подтвердить передачу</button>
+                    </form>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="process_transfer">
+                        <input type="hidden" name="transfer_id" value="{{ transfer.id }}">
+                        <input type="hidden" name="decision" value="reject">
+                        <button class="secondary-button" type="submit">Отклонить передачу</button>
+                    </form>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">
+                <h3>Нет заявок на согласовании</h3>
+                <p>Новые передачи между сотрудниками появятся в этом блоке автоматически.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">История передач</p>
+            <h2>Последние оформленные операции</h2>
+        </div>
+    </div>
+    <div class="list-stack">
+        {% for transfer in recent_transfers %}
+            <div class="list-item">
+                <div>
+                    <strong>{{ transfer.asset.title }}</strong>
+                    <p>{{ transfer.from_employee.short_name }} → {{ transfer.to_employee.short_name }}</p>
+                </div>
+                <div class="list-item-meta">
+                    <span>{{ transfer.processed_at|default:transfer.requested_at|date:"d.m.Y H:i" }}</span>
+                    <span class="status-badge status-{{ transfer.status }}">{{ transfer.get_status_display }}</span>
+                </div>
+            </div>
+        {% empty %}
+            <div class="empty-state">
+                <h3>История пока пуста</h3>
+                <p>После первых операций передачи здесь появится журнал последних заявок.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
