@@ -5,14 +5,20 @@
 {% block content %}
 <section class="hero-card hero-card-compact">
     <div>
-        <p class="eyebrow">Карточка сотрудника</p>
+        <p class="eyebrow">Настройки профиля</p>
         <h1>{{ user_data.full_name|default:user_data.email }}</h1>
         <p class="hero-copy">
-            Профиль показывает текущие реквизиты сотрудника, подразделение и закрепленные за ним материальные ценности.
+            Здесь можно обновить почту, сменить пароль и загрузить новый аватар без выхода из системы.
         </p>
     </div>
     <div class="profile-avatar-block">
-        <div class="profile-avatar">{{ user_data.initial|upper }}</div>
+        <div class="profile-avatar">
+            {% if user_data.avatar %}
+                <img src="{{ user_data.avatar.url }}" alt="{{ user_data.short_name }}">
+            {% else %}
+                {{ user_data.initial|upper }}
+            {% endif %}
+        </div>
     </div>
 </section>
 
@@ -40,7 +46,71 @@
         <div class="panel-header">
             <div>
                 <p class="eyebrow">Контактные данные</p>
-                <h2>Паспорт сотрудника</h2>
+                <h2>Почта и аватар</h2>
+            </div>
+        </div>
+        <form class="form-grid profile-settings-form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_profile">
+            <label class="field-group field-group-full">
+                <span>Текущая почта</span>
+                {{ profile_form.email }}
+                {% for error in profile_form.email.errors %}
+                    <span class="field-error">{{ error }}</span>
+                {% endfor %}
+            </label>
+            <label class="field-group field-group-full">
+                <span>Новый аватар</span>
+                {{ profile_form.avatar }}
+                <span class="field-hint">Поддерживаются изображения в стандартных веб-форматах.</span>
+                {% for error in profile_form.avatar.errors %}
+                    <span class="field-error">{{ error }}</span>
+                {% endfor %}
+            </label>
+            <label class="checkbox-row field-group-full">
+                {{ profile_form.remove_avatar }}
+                <span>Удалить текущий аватар</span>
+            </label>
+            {% for error in profile_form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <button class="primary-button" type="submit">Сохранить профиль</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Безопасность</p>
+                <h2>Смена пароля</h2>
+            </div>
+        </div>
+        <form class="form-grid profile-settings-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="change_password">
+            {% for field in password_form %}
+                <label class="field-group field-group-full">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in password_form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <button class="primary-button" type="submit">Обновить пароль</button>
+        </form>
+    </article>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Паспорт сотрудника</p>
+                <h2>Текущие данные</h2>
             </div>
         </div>
         <div class="details-grid">

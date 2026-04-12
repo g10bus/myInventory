@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import authenticate
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
 
 from .models import User
 
@@ -56,3 +56,64 @@ class RegistrationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class ProfileSettingsForm(forms.ModelForm):
+    remove_avatar = forms.BooleanField(required=False, label="Удалить текущий аватар")
+
+    class Meta:
+        model = User
+        fields = ("email", "avatar")
+        widgets = {
+            "email": forms.EmailInput(
+                attrs={
+                    "class": "text-input",
+                    "placeholder": "employee@company.ru",
+                }
+            ),
+            "avatar": forms.FileInput(
+                attrs={
+                    "class": "file-input",
+                    "accept": "image/*",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["avatar"].required = False
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].lower()
+        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Пользователь с такой почтой уже существует.")
+        return email
+
+    def save(self, commit=True):
+        existing_avatar = None
+        if self.instance.pk:
+            existing_avatar = type(self.instance).objects.get(pk=self.instance.pk).avatar
+
+        remove_avatar = self.cleaned_data.get("remove_avatar")
+        new_avatar = self.cleaned_data.get("avatar")
+
+        if remove_avatar and existing_avatar:
+            existing_avatar.delete(save=False)
+            self.instance.avatar = None
+        elif new_avatar and existing_avatar and existing_avatar.name != new_avatar.name:
+            existing_avatar.delete(save=False)
+
+        self.instance.email = self.cleaned_data["email"]
+        self.instance.username = self.cleaned_data["email"]
+        return super().save(commit=commit)
+
+
+class StyledPasswordChangeForm(PasswordChangeForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update(
+                {
+                    "class": "text-input",
+                }
+            )

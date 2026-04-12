@@ -1,31 +1,67 @@
 {% load static %}
 
-<nav class="topbar">
-    <div class="nav-container">
-        <a class="nav-brand" href="{% url 'home' %}">
-            <img src="{% static 'images/logo-box.png' %}" alt="Логотип">
-            <div>
-                <strong>МОЙ.ИНВЕНТАРЬ</strong>
-                <span>Учёт ТМЦ по сотрудникам</span>
-            </div>
+<aside class="sidebar">
+    <a class="sidebar-brand" href="{% url 'home' %}" aria-label="На главную" title="Главная">
+        <img src="{% static 'images/logo-box.png' %}" alt="Логотип">
+    </a>
+
+    <nav class="sidebar-nav" aria-label="Основная навигация">
+        <a class="sidebar-link {% if request.resolver_match.url_name == 'home' %}sidebar-link-active{% endif %}" href="{% url 'home' %}" aria-label="Обзор" title="Обзор">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5.5h-5V21H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            <span class="sr-only">Обзор</span>
         </a>
+        <a class="sidebar-link {% if request.resolver_match.url_name == 'mytmc' %}sidebar-link-active{% endif %}" href="{% url 'mytmc' %}" aria-label="Мои ТМЦ" title="Мои ТМЦ">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4.5 7.5 12 4l7.5 3.5L12 11z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M4.5 7.5V16.5L12 20l7.5-3.5V7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M12 11v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span class="sr-only">Мои ТМЦ</span>
+        </a>
+        <a class="sidebar-link {% if request.resolver_match.url_name == 'history' %}sidebar-link-active{% endif %}" href="{% url 'history' %}" aria-label="История" title="История">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M20 12a8 8 0 1 1-2.34-5.66" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="sr-only">История</span>
+        </a>
+        <a class="sidebar-link {% if request.resolver_match.url_name == 'exchange' %}sidebar-link-active{% endif %}" href="{% url 'exchange' %}" aria-label="Передачи" title="Передачи">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 7h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="m13.5 3.5 3.5 3.5-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M17 17H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                <path d="m10.5 13.5-3.5 3.5 3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="sr-only">Передачи</span>
+        </a>
+    </nav>
 
-        <div class="nav-center">
-            <a class="nav-a {% if request.resolver_match.url_name == 'home' %}nav-selected{% endif %}" href="{% url 'home' %}">Обзор</a>
-            <a class="nav-a {% if request.resolver_match.url_name == 'mytmc' %}nav-selected{% endif %}" href="{% url 'mytmc' %}">Мои ТМЦ</a>
-            <a class="nav-a {% if request.resolver_match.url_name == 'history' %}nav-selected{% endif %}" href="{% url 'history' %}">История</a>
-            <a class="nav-a {% if request.resolver_match.url_name == 'exchange' %}nav-selected{% endif %}" href="{% url 'exchange' %}">Передачи</a>
-        </div>
-
-        <div class="nav-right">
-            <a class="profile-chip" href="{% url 'profile' %}">
-                <div class="profile-chip-avatar">{{ user_data.initial|upper }}</div>
-                <div>
-                    <strong>{{ user_data.short_name }}</strong>
-                    <span>{{ user_data.department.name|default:"Без отдела" }} • {{ user_data.role }}</span>
+    <div class="sidebar-bottom">
+        <details class="profile-menu">
+            <summary class="profile-menu-trigger" aria-label="Меню профиля" title="Профиль">
+                <div class="profile-menu-avatar">
+                    {% if user_data.avatar %}
+                        <img src="{{ user_data.avatar.url }}" alt="{{ user_data.short_name }}">
+                    {% else %}
+                        {{ user_data.initial|upper }}
+                    {% endif %}
                 </div>
-            </a>
-            <a class="logout-link" href="{% url 'logout' %}">Выйти</a>
-        </div>
+            </summary>
+            <div class="profile-menu-popup">
+                <div class="profile-menu-meta">
+                    <strong>{{ user_data.short_name }}</strong>
+                    <span>{{ user_data.department.name|default:"Без отдела" }}</span>
+                </div>
+                <a class="profile-menu-item" href="{% url 'profile' %}">
+                    <span>Профиль</span>
+                </a>
+                <a class="profile-menu-item profile-menu-item-danger" href="{% url 'logout' %}">
+                    <span>Выход</span>
+                </a>
+            </div>
+        </details>
     </div>
-</nav>
+</aside>

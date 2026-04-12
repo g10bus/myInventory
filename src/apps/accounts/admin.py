@@ -23,6 +23,7 @@ class UserAdmin(BaseUserAdmin):
             "Корпоративный профиль",
             {
                 "fields": (
+                    "avatar",
                     "middle_name",
                     "phone",
                     "role",

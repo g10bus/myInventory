@@ -29,13 +29,19 @@ jobs:
           pip install -r requirements/prod.txt
 
       - name: Prepare runtime dirs
-        run: mkdir -p var
+        run: mkdir -p var var/static var/media
 
       - name: Django system checks
         run: python manage.py check
 
       - name: Apply migrations
         run: python manage.py migrate --noinput
+
+      - name: Bootstrap roles
+        run: python manage.py bootstrap_roles
+
+      - name: Collect static assets
+        run: python manage.py collectstatic --noinput
 
       - name: Verify no missing migrations
         run: python manage.py makemigrations --check --dry-run
