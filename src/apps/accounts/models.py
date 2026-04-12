@@ -52,5 +52,13 @@ class User(AbstractUser, TimeStampedModel):
             return self.first_name[0]
         return self.email[0] if self.email else "?"
 
+    @property
+    def is_administrator(self):
+        if self.is_superuser or self.is_staff:
+            return True
+        if not self.pk:
+            return False
+        return self.groups.filter(name__in=["system_admin", "inventory_operator"]).exists()
+
     def __str__(self):
         return self.full_name

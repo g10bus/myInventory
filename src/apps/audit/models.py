@@ -9,6 +9,7 @@ class AuditEvent(TimeStampedModel):
     class EventType(models.TextChoices):
         ASSET_ISSUED = "asset_issued", "Выдача ТМЦ"
         ASSET_RETURNED = "asset_returned", "Возврат ТМЦ"
+        ASSET_UPDATED = "asset_updated", "Карточка ТМЦ обновлена"
         TRANSFER_REQUESTED = "transfer_requested", "Запрос на передачу"
         TRANSFER_APPROVED = "transfer_approved", "Передача подтверждена"
         TRANSFER_REJECTED = "transfer_rejected", "Передача отклонена"

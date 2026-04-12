@@ -26,5 +26,12 @@ class Asset(TimeStampedModel):
         verbose_name_plural = "ТМЦ"
         ordering = ["category", "title", "inventory_number"]
 
+    @property
+    def current_assignment(self):
+        prefetched = getattr(self, "current_assignments", None)
+        if prefetched is not None:
+            return prefetched[0] if prefetched else None
+        return self.assignments.filter(is_current=True).select_related("employee").first()
+
     def __str__(self):
         return f"{self.title} ({self.inventory_number})"

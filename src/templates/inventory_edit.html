@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование ТМЦ{% endblock %}
+
+{% block content %}
+<section class="hero-card">
+    <div>
+        <p class="eyebrow">Управление карточкой</p>
+        <h1>{{ asset.title }}</h1>
+        <p class="hero-copy">
+            Обновите статус, локацию, даты сверки и другие атрибуты карточки оборудования.
+        </p>
+    </div>
+    <div class="hero-side-note">
+        <span>Инвентарный номер</span>
+        <strong>{{ asset.inventory_number }}</strong>
+        <p>
+            {% if current_assignment %}
+                Закреплено за {{ current_assignment.employee.short_name }}
+            {% else %}
+                Сейчас не закреплено за сотрудником
+            {% endif %}
+        </p>
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Редактирование</p>
+                <h2>Параметры ТМЦ</h2>
+            </div>
+            <a class="ghost-link" href="{% url 'asset-admin' %}">К списку</a>
+        </div>
+        <form class="form-grid profile-settings-form" method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <label class="field-group {% if field.name == 'notes' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <button class="primary-button" type="submit">Сохранить изменения</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Контекст</p>
+                <h2>Текущее состояние</h2>
+            </div>
+        </div>
+        <div class="details-grid">
+            <div class="detail-item">
+                <span>Статус</span>
+                <strong>{{ asset.get_status_display }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Локация</span>
+                <strong>{{ asset.location|default:"Не указана" }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Серийный номер</span>
+                <strong>{{ asset.serial_number|default:"Не указан" }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Ответственный</span>
+                <strong>{% if current_assignment %}{{ current_assignment.employee.full_name|default:current_assignment.employee.email }}{% else %}Не назначен{% endif %}</strong>
+            </div>
+        </div>
+        {% if asset.notes %}
+            <div class="asset-note">{{ asset.notes }}</div>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

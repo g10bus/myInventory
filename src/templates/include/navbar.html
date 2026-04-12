@@ -37,6 +37,19 @@
             </svg>
             <span class="sr-only">Передачи</span>
         </a>
+        {% if user_data.is_administrator %}
+            <a class="sidebar-link {% if request.resolver_match.url_name == 'asset-admin' or request.resolver_match.url_name == 'asset-edit' %}sidebar-link-active{% endif %}" href="{% url 'asset-admin' %}" aria-label="Управление оборудованием" title="Управление оборудованием">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M5 6.5h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M5 17.5h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <circle cx="8" cy="6.5" r="1.5" fill="currentColor"/>
+                    <circle cx="16" cy="12" r="1.5" fill="currentColor"/>
+                    <circle cx="11" cy="17.5" r="1.5" fill="currentColor"/>
+                </svg>
+                <span class="sr-only">Управление оборудованием</span>
+            </a>
+        {% endif %}
     </nav>
 
     <div class="sidebar-bottom">
@@ -58,9 +71,12 @@
                 <a class="profile-menu-item" href="{% url 'profile' %}">
                     <span>Профиль</span>
                 </a>
-                <a class="profile-menu-item profile-menu-item-danger" href="{% url 'logout' %}">
-                    <span>Выход</span>
-                </a>
+                <form method="post" action="{% url 'logout' %}" class="profile-menu-form">
+                    {% csrf_token %}
+                    <button class="profile-menu-item profile-menu-item-danger profile-menu-button" type="submit">
+                        <span>Выход</span>
+                    </button>
+                </form>
             </div>
         </details>
     </div>

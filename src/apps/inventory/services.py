@@ -30,3 +30,25 @@ def write_off_asset(*, asset, actor, note=""):
         metadata={},
     )
     return asset
+
+
+def update_asset_details(*, asset, actor, data):
+    changed_fields = []
+
+    for field, value in data.items():
+        if getattr(asset, field) != value:
+            setattr(asset, field, value)
+            changed_fields.append(field)
+
+    if not changed_fields:
+        return asset, changed_fields
+
+    asset.save(update_fields=[*changed_fields, "updated_at"])
+    log_event(
+        event_type="asset_updated",
+        actor=actor,
+        asset=asset,
+        message=f"Карточка ТМЦ '{asset.title}' обновлена администратором.",
+        metadata={"changed_fields": changed_fields},
+    )
+    return asset, changed_fields
