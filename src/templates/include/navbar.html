@@ -3,6 +3,7 @@
 <aside class="sidebar">
     <a class="sidebar-brand" href="{% url 'home' %}" aria-label="На главную" title="Главная">
         <img src="{% static 'images/logo-box.png' %}" alt="Логотип">
+        <span> Мой.Инвентарь </span>
     </a>
 
     <nav class="sidebar-nav" aria-label="Основная навигация">
@@ -10,7 +11,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5.5h-5V21H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
             </svg>
-            <span class="sr-only">Обзор</span>
+            <span class = "sidebar-brand-label"> Обзор  </span>
         </a>
         <a class="sidebar-link {% if request.resolver_match.url_name == 'mytmc' %}sidebar-link-active{% endif %}" href="{% url 'mytmc' %}" aria-label="Мои ТМЦ" title="Мои ТМЦ">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -18,7 +19,7 @@
                 <path d="M4.5 7.5V16.5L12 20l7.5-3.5V7.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                 <path d="M12 11v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             </svg>
-            <span class="sr-only">Мои ТМЦ</span>
+           <span class = "sidebar-brand-label">Мои ТМЦ</span>
         </a>
         <a class="sidebar-link {% if request.resolver_match.url_name == 'history' %}sidebar-link-active{% endif %}" href="{% url 'history' %}" aria-label="История" title="История">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -26,7 +27,7 @@
                 <path d="M20 12a8 8 0 1 1-2.34-5.66" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 <path d="M20 4v4h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span class="sr-only">История</span>
+            <span class = "sidebar-brand-label">История</span>
         </a>
         <a class="sidebar-link {% if request.resolver_match.url_name == 'exchange' %}sidebar-link-active{% endif %}" href="{% url 'exchange' %}" aria-label="Передачи" title="Передачи">
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -35,7 +36,7 @@
                 <path d="M17 17H7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 <path d="m10.5 13.5-3.5 3.5 3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span class="sr-only">Передачи</span>
+            <span class = "sidebar-brand-label">Передачи</span>
         </a>
         {% if user_data.is_administrator %}
             <a class="sidebar-link {% if request.resolver_match.url_name == 'asset-admin' or request.resolver_match.url_name == 'asset-edit' %}sidebar-link-active{% endif %}" href="{% url 'asset-admin' %}" aria-label="Управление оборудованием" title="Управление оборудованием">
@@ -47,14 +48,14 @@
                     <circle cx="16" cy="12" r="1.5" fill="currentColor"/>
                     <circle cx="11" cy="17.5" r="1.5" fill="currentColor"/>
                 </svg>
-                <span class="sr-only">Управление оборудованием</span>
+                <span class = "sidebar-brand-label">Управление оборудованием</span>
             </a>
             <a class="sidebar-link {% if request.resolver_match.url_name == 'asset-create' %}sidebar-link-active{% endif %}" href="{% url 'asset-create' %}" aria-label="Добавить ТМЦ" title="Добавить ТМЦ">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 5v14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                     <path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>
-                <span class="sr-only">Добавить ТМЦ</span>
+                <span class = "sidebar-brand-label">Добавить ТМЦ</span>
             </a>
             <a class="sidebar-link {% if request.resolver_match.url_name == 'custody-admin' %}sidebar-link-active{% endif %}" href="{% url 'custody-admin' %}" aria-label="Движение ТМЦ" title="Движение ТМЦ">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -63,7 +64,7 @@
                     <path d="M18 17H9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                     <path d="m12 14-3 3 3 3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <span class="sr-only">Движение ТМЦ</span>
+                <span class = "sidebar-brand-label">Движение ТМЦ</span>
             </a>
             <a class="sidebar-link {% if request.resolver_match.url_name == 'user-admin' or request.resolver_match.url_name == 'user-edit' %}sidebar-link-active{% endif %}" href="{% url 'user-admin' %}" aria-label="Управление сотрудниками" title="Управление сотрудниками">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -72,7 +73,7 @@
                     <path d="M3.5 19a4.5 4.5 0 0 1 9 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                     <path d="M13.5 19a3.5 3.5 0 0 1 7 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                 </svg>
-                <span class="sr-only">Управление сотрудниками</span>
+                <span class = "sidebar-brand-label">Управление сотрудниками</span>
             </a>
         {% endif %}
     </nav>
@@ -82,10 +83,13 @@
             <summary class="profile-menu-trigger" aria-label="Меню профиля" title="Профиль">
                 <div class="profile-menu-avatar">
                     {% if user_data.avatar %}
-                        <img src="{{ user_data.avatar.url }}" alt="{{ user_data.short_name }}">
+                        <img src="{{ user_data.avatar.url }}" >
+
+                       
                     {% else %}
                         {{ user_data.initial|upper }}
                     {% endif %}
+                    <span style = " margin-left: 20px ; color:red;"> {{ user_data.short_name }} </span>
                 </div>
             </summary>
             <div class="profile-menu-popup">
