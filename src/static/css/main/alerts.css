@@ -1,0 +1,24 @@
+﻿.flash-stack {
+    display: grid;
+    gap: 10px;
+}
+
+.flash-message {
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    background: #eef7ff;
+    color: var(--info);
+}
+
+.flash-success {
+    background: #edf6ff;
+    color: var(--brand-dark);
+    border-color: rgba(47, 128, 237, 0.18);
+}
+
+.flash-error {
+    background: #fff0ec;
+    color: var(--danger);
+    border-color: rgba(190, 77, 53, 0.18);
+}
