@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}{{ asset.title }}{% endblock %}
+
+{% block content %}
+<section class="hero-card">
+    <div>
+        <p class="eyebrow">Карточка ТМЦ</p>
+        <h1>{{ asset.title }}</h1>
+        <p class="hero-copy">
+            Здесь отображаются подробные данные о закрепленном за сотрудником предмете:
+            параметры, статус, место хранения и информация о текущем закреплении.
+        </p>
+    </div>
+    <div class="hero-side-note">
+        <span>Инвентарный номер</span>
+        <strong>{{ asset.inventory_number }}</strong>
+        <p>
+            {% if current_assignment %}
+                Закреплено за {{ current_assignment.employee.short_name }}
+            {% else %}
+                Сейчас не закреплено за сотрудником
+            {% endif %}
+        </p>
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Параметры</p>
+                <h2>Основные данные</h2>
+            </div>
+            <a class="ghost-link" href="{% url 'mytmc' %}">К списку ТМЦ</a>
+        </div>
+        <div class="details-grid">
+            <div class="detail-item">
+                <span>Категория</span>
+                <strong>{{ asset.category }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Статус</span>
+                <strong>{{ asset.get_status_display }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Модель</span>
+                <strong>{{ asset.model_name|default:"Не указана" }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Серийный номер</span>
+                <strong>{{ asset.serial_number|default:"Не указан" }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Локация</span>
+                <strong>{{ asset.location|default:"Не указана" }}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Следующая сверка</span>
+                <strong>{{ asset.next_verification_date|date:"d.m.Y"|default:"Не задана" }}</strong>
+            </div>
+        </div>
+        {% if asset.notes %}
+            <div class="asset-note">{{ asset.notes }}</div>
+        {% endif %}
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Закрепление</p>
+                <h2>Текущее состояние</h2>
+            </div>
+        </div>
+        <div class="details-grid">
+            <div class="detail-item">
+                <span>Ответственный</span>
+                <strong>{% if current_assignment %}{{ current_assignment.employee.full_name|default:current_assignment.employee.email }}{% else %}Не назначен{% endif %}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Дата выдачи</span>
+                <strong>{% if current_assignment %}{{ current_assignment.assigned_at|date:"d.m.Y H:i" }}{% else %}Не назначена{% endif %}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Место выдачи</span>
+                <strong>{% if current_assignment %}{{ current_assignment.location_at_issue|default:"Не указано" }}{% else %}Не указано{% endif %}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Последняя сверка</span>
+                <strong>{{ asset.last_verified_at|date:"d.m.Y"|default:"Не проводилась" }}</strong>
+            </div>
+        </div>
+    </article>
+</section>
+
+
+<section class="panel">
+    <div>
+        <p class="eyebrow">Сверка данных</p>
+
+    </div>
+
+</section>
+
+
+
+
+{% endblock %}

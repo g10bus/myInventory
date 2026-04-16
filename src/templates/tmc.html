@@ -28,6 +28,7 @@
 
 <section class="asset-grid">
     {% for asset in assets %}
+        <a class="asset-card-link" href="{% url 'mytmc-detail' inventory_number=asset.inventory_number %}">
         <article class="asset-card asset-card-wide">
             <div class="asset-card-top">
                 <span class="pill">{{ asset.category }}</span>
@@ -57,6 +58,7 @@
                 <div class="asset-note">{{ asset.notes }}</div>
             {% endif %}
         </article>
+        </a>
     {% empty %}
         <div class="empty-state">
             <h3>Ничего не найдено</h3>

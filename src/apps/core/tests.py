@@ -127,6 +127,25 @@ class WebUserFlowsTestCase(TestCase):
         self.assertContains(response, self.asset.inventory_number)
         self.assertContains(response, self.employee.office_location)
 
+    def test_employee_can_open_assigned_asset_details(self):
+        issue_asset(
+            asset=self.asset,
+            employee=self.employee,
+            actor=self.admin,
+            note="Выдано сотруднику для просмотра карточки.",
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.get(
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "tmc_detail.html")
+        self.assertContains(response, self.asset.title)
+        self.assertContains(response, self.asset.inventory_number)
+        self.assertContains(response, self.employee.short_name)
+
     def test_transfer_can_be_created_and_approved_via_web(self):
         issue_asset(
             asset=self.asset,

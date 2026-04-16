@@ -34,6 +34,23 @@ def my_assets_view(request):
 
 
 @login_required
+def my_asset_detail_view(request, inventory_number):
+    asset = get_object_or_404(
+        get_user_assets(request.user),
+        inventory_number=inventory_number,
+    )
+    return render(
+        request,
+        "tmc_detail.html",
+        {
+            "user_data": request.user,
+            "asset": asset,
+            "current_assignment": asset.current_assignment,
+        },
+    )
+
+
+@login_required
 def asset_admin_view(request):
     ensure_administrator(request.user)
     query = request.GET.get("q", "").strip()
