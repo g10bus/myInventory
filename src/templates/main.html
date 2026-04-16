@@ -18,6 +18,7 @@
     </div>
 </section>
 
+
 <section class="stats-grid">
     {% for stat in stats_cards %}
         <article class="stat-card">
@@ -28,14 +29,20 @@
     {% endfor %}
 </section>
 
+
+
 <section class="summary-strip">
     {% for item in overall_summary %}
-        <article class="summary-card">
-            <span class="summary-label">{{ item.label }}</span>
-            <strong>{{ item.value }}</strong>
-        </article>
+        {% if user_data.is_administrator %}
+            <article class="summary-card">
+                <span class="summary-label">{{ item.label }}</span>
+                <strong>{{ item.value }}</strong>
+            </article>
+        {% endif %}
     {% endfor %}
 </section>
+
+
 
 <section class="content-grid">
     <article class="panel">
