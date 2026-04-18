@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}{{ asset.title }}{% endblock %}
 
@@ -93,16 +94,77 @@
     </article>
 </section>
 
-
 <section class="panel">
-    <div>
-        <p class="eyebrow">Сверка данных</p>
-
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Фиксации последних инвентаризаций</p>
+            <h2>Записи инвентаризации по карточке</h2>
+        </div>
+        <span class="pill">{{ verification_records|length }} шт.</span>
     </div>
 
+    {% if verification_records %}
+        <div class="verification-list">
+            {% for record in verification_records %}
+                <article class="verification-card">
+                    <div class="verification-card-media">
+                        {% if record.image_url %}
+                            <img src="{{ record.image_url }}" alt="{{ record.image_caption|default:asset.title }}">
+                        {% else %}
+                            <img src="{% static 'images/laptop.jpg' %}" alt="Фиксация инвентаризации для {{ asset.title }}">
+                        {% endif %}
+                    </div>
+                    <div class="verification-card-body">
+                        <div class="verification-card-head">
+                            <div>
+                                <p class="eyebrow">Фиксация {{ forloop.counter }}</p>
+                                <h3>{{ record.occurred_at|date:"d.m.Y" }}</h3>
+                                {% if record.images_count %}
+                                    <p class="table-muted">Фотографий в записи: {{ record.images_count }}</p>
+                                {% endif %}
+                            </div>
+                            <span class="status-badge status-{{ asset.status }}">{{ asset.get_status_display }}</span>
+                        </div>
+
+                        <div class="details-grid verification-details">
+                            <div class="detail-item">
+                                <span>Дата инвентаризации</span>
+                                <strong>{{ record.occurred_at|date:"d.m.Y" }}</strong>
+                            </div>
+                            <div class="detail-item">
+                                <span>Проводил сверку</span>
+                                <strong>{{ record.verified_by }}</strong>
+                            </div>
+                            <div class="detail-item">
+                                <span>Ответственный сотрудник</span>
+                                <strong>{{ record.responsible_person }}</strong>
+                            </div>
+                            <div class="detail-item">
+                                <span>Локация фиксации</span>
+                                <strong>{{ record.location|default:"Не указана" }}</strong>
+                            </div>
+                            <div class="detail-item">
+                                <span>Следующая сверка</span>
+                                <strong>{{ record.next_verification_date|date:"d.m.Y"|default:"Не назначена" }}</strong>
+                            </div>
+                            <div class="detail-item">
+                                <span>Инвентарный номер</span>
+                                <strong>{{ asset.inventory_number }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="verification-note">
+                            <span>Комментарий к фиксации</span>
+                            <strong>{{ record.message|default:"Комментарий не добавлен." }}</strong>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="verification-empty">
+            <p>Для этой карточки пока нет зафиксированных инвентаризаций.</p>
+        </div>
+    {% endif %}
 </section>
-
-
-
-
 {% endblock %}

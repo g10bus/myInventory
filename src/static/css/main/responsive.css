@@ -19,6 +19,10 @@
     .timeline-item {
         grid-template-columns: 1fr;
     }
+
+    .verification-card {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 820px) {
@@ -71,7 +75,8 @@
     .list-item,
     .asset-card-top,
     .timeline-head,
-    .request-card-head {
+    .request-card-head,
+    .verification-card-head {
         flex-direction: column;
         align-items: flex-start;
     }

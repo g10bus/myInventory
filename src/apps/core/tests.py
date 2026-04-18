@@ -1,10 +1,13 @@
+from datetime import date
+
 from django.test import TestCase
 from django.urls import reverse
 
 from apps.accounts.models import User
 from apps.custody.models import TransferRequest
 from apps.custody.services import issue_asset, request_transfer, return_asset
-from apps.inventory.models import Asset
+from apps.inventory.models import Asset, InventoryVerification
+from apps.inventory.services import record_verification
 from apps.org.models import Department
 
 
@@ -145,6 +148,36 @@ class WebUserFlowsTestCase(TestCase):
         self.assertContains(response, self.asset.title)
         self.assertContains(response, self.asset.inventory_number)
         self.assertContains(response, self.employee.short_name)
+
+    def test_asset_detail_displays_verification_fixations(self):
+        issue_asset(
+            asset=self.asset,
+            employee=self.employee,
+            actor=self.admin,
+            note="Выдано сотруднику для проверки карточки.",
+        )
+        verification = record_verification(
+            asset=self.asset,
+            actor=self.admin,
+            next_verification_date=date(2026, 6, 12),
+            note="Проверен комплект, маркировка и фактическая локация ТМЦ.",
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.get(
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(InventoryVerification.objects.filter(asset=self.asset).count(), 1)
+        self.assertEqual(verification.responsible_employee, self.employee)
+        self.assertEqual(verification.location, self.employee.office_location)
+        self.assertContains(response, "Фиксации последних инвентаризаций")
+        self.assertContains(response, "Проверен комплект, маркировка и фактическая локация ТМЦ.")
+        self.assertContains(response, self.admin.full_name)
+        self.assertContains(response, self.employee.full_name)
+        self.assertContains(response, self.employee.office_location)
+        self.assertContains(response, "12.06.2026")
 
     def test_transfer_can_be_created_and_approved_via_web(self):
         issue_asset(

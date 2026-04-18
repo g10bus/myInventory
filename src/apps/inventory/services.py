@@ -1,7 +1,7 @@
 from django.utils import timezone
 
 from apps.audit.services import log_event
-from apps.inventory.models import Asset
+from apps.inventory.models import Asset, InventoryVerification
 
 
 def create_asset(*, actor, data):
@@ -17,18 +17,37 @@ def create_asset(*, actor, data):
 
 
 def record_verification(*, asset, actor, next_verification_date=None, note=""):
+    current_assignment = asset.assignments.filter(is_current=True).select_related("employee").first()
+    location = asset.location
+    if not location and current_assignment:
+        location = current_assignment.location_at_issue
+
+    verification = InventoryVerification.objects.create(
+        asset=asset,
+        verified_at=timezone.now(),
+        verified_by=actor,
+        responsible_employee=current_assignment.employee if current_assignment else None,
+        location=location,
+        next_verification_date=next_verification_date,
+        notes=note,
+    )
+
     asset.last_verified_at = timezone.localdate()
     asset.next_verification_date = next_verification_date
     asset.save(update_fields=["last_verified_at", "next_verification_date", "updated_at"])
+
     log_event(
         event_type="asset_verified",
         actor=actor,
-        related_user=asset.assignments.filter(is_current=True).first().employee if asset.assignments.filter(is_current=True).exists() else None,
+        related_user=current_assignment.employee if current_assignment else None,
         asset=asset,
         message=note or f"Для ТМЦ '{asset.title}' зафиксирована сверка.",
-        metadata={"next_verification_date": str(next_verification_date) if next_verification_date else ""},
+        metadata={
+            "next_verification_date": str(next_verification_date) if next_verification_date else "",
+            "verification_id": verification.id,
+        },
     )
-    return asset
+    return verification
 
 
 def write_off_asset(*, asset, actor, note=""):

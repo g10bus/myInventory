@@ -325,3 +325,72 @@
     color: var(--text);
 }
 
+.verification-list {
+    display: grid;
+    gap: 18px;
+}
+
+.verification-card {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 18px;
+    padding: 16px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+    background: rgba(245, 251, 255, 0.92);
+}
+
+.verification-card-media {
+    min-height: 210px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: rgba(226, 242, 255, 0.9);
+}
+
+.verification-card-media img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.verification-card-body {
+    display: grid;
+    gap: 14px;
+}
+
+.verification-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.verification-details {
+    margin-top: 0;
+}
+
+.verification-note,
+.verification-empty {
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: rgba(232, 244, 255, 0.92);
+}
+
+.verification-note span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.84rem;
+    color: var(--muted);
+}
+
+.verification-note strong {
+    display: block;
+    font-weight: 700;
+}
+
+.verification-empty p {
+    margin: 0;
+    color: var(--muted);
+}
+
