@@ -394,3 +394,9 @@
     color: var(--muted);
 }
 
+.red-allert{
+    background-color: rgba(253, 17, 17, 0.205);
+}
+
+
+

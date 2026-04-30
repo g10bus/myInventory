@@ -83,11 +83,11 @@
             <summary class="profile-menu-trigger" aria-label="Меню профиля" title="Профиль">
                 <div class="profile-menu-avatar">
                     {% if user_data.avatar %}
-                        <img src="{{ user_data.avatar.url }}" >
+                        <img src="{{ user_data.avatar.url }}" alt="{{ user_data.short_name }}">
 
                        
                     {% else %}
-                        {{ user_data.initial|upper }}
+                        <img src="/static/images/man-profile.png" alt="{{ user_data.short_name }}">
                     {% endif %}
                     
                 </div>

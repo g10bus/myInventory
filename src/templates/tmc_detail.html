@@ -56,10 +56,17 @@
                 <span>Локация</span>
                 <strong>{{ asset.location|default:"Не указана" }}</strong>
             </div>
-            <div class="detail-item">
-                <span>Следующая сверка</span>
-                <strong>{{ asset.next_verification_date|date:"d.m.Y"|default:"Не задана" }}</strong>
-            </div>
+            {% if verification_is_overdue %}
+                <div class="detail-item">
+                    <span>Следующая сверка (просрочена)</span>
+                    <strong>{{ asset.next_verification_date|date:"d.m.Y"|default:"Не задана" }}</strong>
+                </div>
+            {% else %}
+                <div class="detail-item">
+                    <span>Следующая сверка</span>
+                    <strong>{{ asset.next_verification_date|date:"d.m.Y"|default:"Не задана" }}</strong>
+                </div>
+            {% endif %}
         </div>
         {% if asset.notes %}
             <div class="asset-note">{{ asset.notes }}</div>
@@ -93,6 +100,40 @@
         </div>
     </article>
 </section>
+
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Провести инвентаризацию</p>
+            <h2>Фотофиксация и данные сверки</h2>
+        </div>
+        <span class="pill">Запись сохранится в историю</span>
+    </div>
+
+    <form class="form-grid profile-settings-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% for field in verification_form %}
+            <label class="field-group {% if field.name == 'note' or field.name == 'image' %}field-group-full{% endif %}">
+                <span>{{ field.label }}</span>
+                {{ field }}
+                {% if field.name == "image" %}
+                    <small class="field-hint">Можно прикрепить фото текущего состояния ТМЦ.</small>
+                {% endif %}
+                {% for error in field.errors %}
+                    <span class="field-error">{{ error }}</span>
+                {% endfor %}
+            </label>
+        {% endfor %}
+        {% for error in verification_form.non_field_errors %}
+            <span class="field-error field-group-full">{{ error }}</span>
+        {% endfor %}
+        <div class="verification-submit-group">
+            <button class="primary-button" type="submit">Сохранить фотофиксацию</button>
+        </div>
+    </form>
+</section>
+
 
 <section class="panel">
     <div class="panel-header">

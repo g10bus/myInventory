@@ -9,6 +9,7 @@ services:
       RUN_MIGRATIONS: "1"
       RUN_COLLECTSTATIC: "1"
       DJANGO_SETTINGS_MODULE: config.settings.prod
+      DJANGO_SERVE_MEDIA: "1"
       DJANGO_SECURE_SSL_REDIRECT: "0"
       DJANGO_SESSION_COOKIE_SECURE: "0"
       DJANGO_CSRF_COOKIE_SECURE: "0"
@@ -17,6 +18,8 @@ services:
       DJANGO_SECURE_HSTS_PRELOAD: "0"
     ports:
       - "8000:8000"
+    volumes:
+      - media_data:/app/var/media
     depends_on:
       db:
         condition: service_healthy
@@ -47,3 +50,4 @@ services:
 
 volumes:
   postgres_data:
+  media_data:

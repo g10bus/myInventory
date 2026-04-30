@@ -4,11 +4,12 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 from apps.audit.models import AuditEvent
-from apps.inventory.forms import AssetAdminForm
+from apps.inventory.forms import AssetAdminForm, InventoryVerificationCreateForm
 from apps.inventory.models import Asset
-from apps.inventory.services import create_asset, update_asset_details
+from apps.inventory.services import create_asset, record_verification, update_asset_details
 
 from ..selectors import get_all_assets, get_user_assets
 
@@ -70,7 +71,7 @@ def build_verification_records(asset):
             except ValueError:
                 next_verification_date = None
 
-        location = asset.location
+        location = metadata.get("location") or asset.location
         if not location and current_assignment:
             location = current_assignment.location_at_issue
 
@@ -114,6 +115,18 @@ def build_verification_records(asset):
     return records
 
 
+def build_verification_form_initial(asset):
+    current_assignment = asset.current_assignment
+    location = asset.location
+    if not location and current_assignment:
+        location = current_assignment.location_at_issue
+
+    return {
+        "location": location,
+        "next_verification_date": asset.next_verification_date,
+    }
+
+
 @login_required
 def my_assets_view(request):
     query = request.GET.get("q", "").strip()
@@ -139,6 +152,28 @@ def my_asset_detail_view(request, inventory_number):
         inventory_number=inventory_number,
     )
     current_assignment = asset.current_assignment
+
+    if request.method == "POST":
+        verification_form = InventoryVerificationCreateForm(request.POST, request.FILES)
+        if verification_form.is_valid():
+            record_verification(
+                asset=asset,
+                actor=request.user,
+                next_verification_date=verification_form.cleaned_data["next_verification_date"],
+                note=verification_form.cleaned_data["note"],
+                location=verification_form.cleaned_data["location"],
+                image=verification_form.cleaned_data["image"],
+                image_caption=verification_form.cleaned_data["image_caption"],
+            )
+            messages.success(request, "Фиксация сверки сохранена.")
+            return redirect("mytmc-detail", inventory_number=asset.inventory_number)
+        messages.error(request, "Не удалось сохранить фиксацию. Проверьте заполненные поля.")
+    else:
+        verification_form = InventoryVerificationCreateForm(initial=build_verification_form_initial(asset))
+
+    verification_is_overdue = bool(
+        asset.next_verification_date and asset.next_verification_date < timezone.localdate()
+    )
     return render(
         request,
         "tmc_detail.html",
@@ -147,6 +182,8 @@ def my_asset_detail_view(request, inventory_number):
             "asset": asset,
             "current_assignment": current_assignment,
             "verification_records": build_verification_records(asset),
+            "verification_is_overdue": verification_is_overdue,
+            "verification_form": verification_form,
         },
     )
 

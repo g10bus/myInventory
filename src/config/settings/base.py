@@ -8,6 +8,7 @@ SRC_DIR = BASE_DIR / "src"
 
 env = environ.Env(
     DJANGO_DEBUG=(bool, False),
+    DJANGO_SERVE_MEDIA=(bool, False),
     DJANGO_ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1"]),
     DJANGO_CSRF_TRUSTED_ORIGINS=(list, []),
 )
@@ -16,6 +17,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="unsafe-dev-secret-key-change-me")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
+SERVE_MEDIA = env.bool("DJANGO_SERVE_MEDIA", default=DEBUG)
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
 SECURE_CONTENT_TYPE_NOSNIFF = True

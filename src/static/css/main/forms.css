@@ -10,6 +10,8 @@
 .field-group,
 .field-group-full {
     display: grid;
+    align-self: end;
+
     gap: 6px;
 }
 
@@ -19,6 +21,25 @@
 
 .profile-settings-form {
     align-items: start;
+}
+
+.verification-submit-group {
+    display: grid;
+    align-self: end;
+    padding-bottom:0.3px;
+}
+
+.verification-submit-group::before {
+    content: "";
+    display: block;
+    height: 1.45rem;
+    margin-bottom: 6px;
+}
+
+.verification-submit-group .primary-button {
+    width: auto;
+    min-width: 220px;
+    padding:12px 14px;
 }
 
 .field-error,
