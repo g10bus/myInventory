@@ -15,6 +15,7 @@ class AuditEvent(TimeStampedModel):
         TRANSFER_REJECTED = "transfer_rejected", "Передача отклонена"
         ASSET_VERIFIED = "asset_verified", "Сверка ТМЦ"
         ASSET_WRITTEN_OFF = "asset_written_off", "Списание ТМЦ"
+        INVENTORY_ASSIGNMENT_CREATED = "inventory_assignment_created", "Назначена инвентаризация"
 
     event_type = models.CharField(max_length=50, choices=EventType.choices)
     actor = models.ForeignKey(

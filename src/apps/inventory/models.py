@@ -91,3 +91,41 @@ class InventoryVerificationImage(TimeStampedModel):
     def __str__(self):
         return self.caption or f"Изображение для {self.verification}"
 
+
+class EmployeeInventoryAssignment(TimeStampedModel):
+    employee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="inventory_assignments",
+    )
+    assigned_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="inventory_assignments_created",
+        null=True,
+        blank=True,
+    )
+    date_from = models.DateField()
+    date_to = models.DateField()
+    note = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Назначение инвентаризации"
+        verbose_name_plural = "Назначения инвентаризации"
+        ordering = ["-date_from", "-created_at"]
+
+    def __str__(self):
+        return f"Инвентаризация для {self.employee} с {self.date_from:%d.%m.%Y} по {self.date_to:%d.%m.%Y}"
+
+    @property
+    def is_active(self):
+        today = timezone.localdate()
+        return self.date_from <= today <= self.date_to
+
+    @property
+    def is_upcoming(self):
+        return timezone.localdate() < self.date_from
+
+    @property
+    def is_expired(self):
+        return timezone.localdate() > self.date_to

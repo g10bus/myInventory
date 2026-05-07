@@ -1,13 +1,14 @@
-from datetime import date
+from datetime import date, timedelta
 
 from django.contrib.auth.models import Group
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.custody.models import TransferRequest
 from apps.custody.services import issue_asset, request_transfer, return_asset
-from apps.inventory.models import Asset, InventoryVerification
+from apps.inventory.models import Asset, EmployeeInventoryAssignment, InventoryVerification
 from apps.inventory.services import record_verification
 from apps.org.models import Department
 
@@ -487,6 +488,103 @@ class WebPagesTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, self.asset.title)
         self.assertNotContains(response, extra_asset.title)
+
+    def test_admin_can_assign_inventory_period_to_employee(self):
+        self.client.force_login(self.admin)
+        today = timezone.localdate()
+
+        response = self.client.post(
+            reverse("inventory-assignment-admin"),
+            {
+                "employee": self.employee.pk,
+                "date_from": (today + timedelta(days=1)).isoformat(),
+                "date_to": (today + timedelta(days=5)).isoformat(),
+                "note": "Нужно подтвердить наличие всех закрепленных ТМЦ.",
+            },
+        )
+
+        self.assertRedirects(response, reverse("inventory-assignment-admin"))
+        assignment = EmployeeInventoryAssignment.objects.get(employee=self.employee)
+        self.assertEqual(assignment.assigned_by, self.admin)
+        self.assertEqual(assignment.note, "Нужно подтвердить наличие всех закрепленных ТМЦ.")
+
+    def test_employee_sees_inventory_assignment_on_dashboard(self):
+        today = timezone.localdate()
+        EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today,
+            date_to=today + timedelta(days=3),
+            note="Проведите сверку в рабочее время.",
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Назначенные инвентаризации")
+        self.assertContains(response, "Проведите сверку в рабочее время.")
+
+    def test_employee_cannot_open_verification_form_without_admin_assignment(self):
+        self.client.force_login(self.employee)
+
+        response = self.client.get(
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Сверка пока закрыта")
+        self.assertNotContains(response, "name=\"next_verification_date\"", html=False)
+
+    def test_employee_cannot_submit_verification_outside_inventory_period(self):
+        today = timezone.localdate()
+        EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today + timedelta(days=2),
+            date_to=today + timedelta(days=4),
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.post(
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+            {
+                "location": self.employee.office_location,
+                "note": "Пытаюсь провести сверку раньше срока.",
+                "image_caption": "",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+        )
+        self.assertEqual(InventoryVerification.objects.filter(asset=self.asset).count(), 0)
+
+    def test_employee_can_submit_verification_during_inventory_period(self):
+        today = timezone.localdate()
+        EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today - timedelta(days=1),
+            date_to=today + timedelta(days=2),
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.post(
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+            {
+                "location": self.employee.office_location,
+                "note": "Сверка проведена в активный период.",
+                "image_caption": "",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+        )
+        self.assertEqual(InventoryVerification.objects.filter(asset=self.asset).count(), 1)
 
     def test_user_admin_filters_by_status_and_admin_access(self):
         admin_group = Group.objects.create(name="system_admin")

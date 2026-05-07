@@ -1,5 +1,7 @@
 from django import forms
 
+from apps.accounts.models import User
+
 from .models import Asset
 
 
@@ -45,11 +47,6 @@ class AssetAdminForm(forms.ModelForm):
 
 
 class InventoryVerificationCreateForm(forms.Form):
-    next_verification_date = forms.DateField(
-        required=False,
-        label="Следующая сверка",
-        widget=forms.DateInput(attrs={"class": "text-input", "type": "date"}),
-    )
     location = forms.CharField(
         required=False,
         label="Локация фиксации",
@@ -91,3 +88,50 @@ class InventoryVerificationCreateForm(forms.Form):
             }
         ),
     )
+
+
+class EmployeeInventoryAssignmentForm(forms.Form):
+    employee = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        label="Сотрудник",
+        widget=forms.Select(attrs={"class": "select-input", "id": "employee-select"}),
+    )
+    date_from = forms.DateField(
+        label="Период с",
+        widget=forms.DateInput(attrs={"class": "text-input", "type": "date"}),
+    )
+    date_to = forms.DateField(
+        label="Период по",
+        widget=forms.DateInput(attrs={"class": "text-input", "type": "date"}),
+    )
+    note = forms.CharField(
+        required=False,
+        label="Комментарий для сотрудника",
+        widget=forms.Textarea(
+            attrs={
+                "class": "textarea-input",
+                "rows": 4,
+                "placeholder": "Например: нужно подтвердить фактическое наличие и актуальную локацию всех закрепленных ТМЦ.",
+            }
+        ),
+    )
+
+    def __init__(self, *args, employee_queryset=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        queryset = employee_queryset if employee_queryset is not None else User.objects.none()
+        self.fields["employee"].queryset = queryset
+        self.fields["employee"].label_from_instance = self.build_employee_label
+
+    def build_employee_label(self, user):
+        department_name = user.department.name if user.department else "Без отдела"
+        return f"{user.full_name} • {user.email} • {department_name}"
+
+    def clean(self):
+        cleaned_data = super().clean()
+        date_from = cleaned_data.get("date_from")
+        date_to = cleaned_data.get("date_to")
+
+        if date_from and date_to and date_from > date_to:
+            raise forms.ValidationError("Дата окончания не может быть раньше даты начала.")
+
+        return cleaned_data

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Назначение инвентаризации{% endblock %}
+
+{% block content %}
+<section class="hero-card hero-card-compact">
+    <div>
+        <p class="eyebrow">Панель администратора</p>
+        <h1>Назначение инвентаризации сотруднику</h1>
+        <p class="hero-copy">
+            Выберите сотрудника, задайте период проведения инвентаризации и отправьте ему задачу.
+            В назначенный срок сотрудник увидит уведомление и сможет провести сверку закрепленных ТМЦ.
+        </p>
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Новое назначение</p>
+                <h2>Период инвентаризации</h2>
+            </div>
+        </div>
+
+        <div class="field-group">
+            <span>Поиск сотрудника</span>
+            <input class="text-input" type="text" id="employee-search-input" placeholder="Начните вводить ФИО, email или отдел">
+            <small class="field-hint">Поиск работает прямо по списку выбора ниже.</small>
+        </div>
+
+        <form class="form-grid profile-settings-form" method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <label class="field-group {% if field.name == 'note' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <div class="form-actions">
+                <button class="primary-button" type="submit">Назначить инвентаризацию</button>
+                <a class="secondary-button" href="{% url 'inventory-assignment-admin' %}">Очистить форму</a>
+            </div>
+        </form>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">История назначений</p>
+                <h2>Кому и когда назначено</h2>
+            </div>
+            <span class="pill">{{ assignment_history|length }}</span>
+        </div>
+
+        <form class="search-row" method="get">
+            <input class="text-input" type="text" name="employee_q" placeholder="Поиск по сотруднику, email или отделу" value="{{ employee_query }}">
+            <button class="primary-button" type="submit">Найти</button>
+        </form>
+
+        <div class="list-stack">
+            {% for assignment in assignment_history %}
+                <div class="list-item">
+                    <div>
+                        <strong>{{ assignment.employee.full_name|default:assignment.employee.email }}</strong>
+                        <p>
+                            {{ assignment.date_from|date:"d.m.Y" }} - {{ assignment.date_to|date:"d.m.Y" }}
+                            • {{ assignment.employee.department.name|default:"Без отдела" }}
+                            {% if assignment.note %}• {{ assignment.note }}{% endif %}
+                        </p>
+                    </div>
+                    <div class="list-item-meta">
+                        {% if assignment.is_active %}
+                            <span class="status-badge status-in_use">Активно</span>
+                        {% elif assignment.is_upcoming %}
+                            <span class="status-badge status-reserve">Ожидает</span>
+                        {% else %}
+                            <span class="status-badge status-broken">Завершено</span>
+                        {% endif %}
+                        <span>{% if assignment.assigned_by %}{{ assignment.assigned_by.short_name }}{% else %}Система{% endif %}</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>Назначений пока нет</h3>
+                    <p>Создайте первое назначение инвентаризации для сотрудника.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("employee-search-input");
+    const select = document.getElementById("employee-select");
+
+    if (!searchInput || !select) {
+        return;
+    }
+
+    const options = Array.from(select.options);
+    searchInput.addEventListener("input", function () {
+        const query = searchInput.value.trim().toLowerCase();
+        options.forEach(function (option) {
+            if (!option.value) {
+                option.hidden = false;
+                return;
+            }
+            option.hidden = query && !option.text.toLowerCase().includes(query);
+            if (option.hidden && option.selected) {
+                select.selectedIndex = 0;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

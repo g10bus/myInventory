@@ -101,6 +101,41 @@
     </article>
 </section>
 
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Окно проведения</p>
+            <h2>Доступ к инвентаризации</h2>
+        </div>
+    </div>
+    <div class="list-stack">
+        {% if active_inventory_assignment %}
+            <div class="list-item">
+                <div>
+                    <strong>Инвентаризация сейчас доступна</strong>
+                    <p>
+                        Период: {{ active_inventory_assignment.date_from|date:"d.m.Y" }} -
+                        {{ active_inventory_assignment.date_to|date:"d.m.Y" }}
+                        {% if active_inventory_assignment.note %}• {{ active_inventory_assignment.note }}{% endif %}
+                    </p>
+                </div>
+                <div class="list-item-meta">
+                    <span class="status-badge status-in_use">Активно</span>
+                </div>
+            </div>
+        {% else %}
+            <div class="list-item">
+                <div>
+                    <strong>Инвентаризация временно недоступна</strong>
+                    <p>{{ verification_lock_message }}</p>
+                </div>
+                <div class="list-item-meta">
+                    <span class="status-badge status-reserve">Закрыто</span>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</section>
 
 <section class="panel">
     <div class="panel-header">
@@ -111,29 +146,35 @@
         <span class="pill">Запись сохранится в историю</span>
     </div>
 
-    <form class="form-grid profile-settings-form" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% for field in verification_form %}
-            <label class="field-group {% if field.name == 'note' or field.name == 'image' %}field-group-full{% endif %}">
-                <span>{{ field.label }}</span>
-                {{ field }}
-                {% if field.name == "image" %}
-                    <small class="field-hint">Можно прикрепить фото текущего состояния ТМЦ.</small>
-                {% endif %}
-                {% for error in field.errors %}
-                    <span class="field-error">{{ error }}</span>
-                {% endfor %}
-            </label>
-        {% endfor %}
-        {% for error in verification_form.non_field_errors %}
-            <span class="field-error field-group-full">{{ error }}</span>
-        {% endfor %}
-        <div class="verification-submit-group">
-            <button class="primary-button" type="submit">Сохранить фотофиксацию</button>
+    {% if verification_allowed %}
+        <form class="form-grid profile-settings-form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in verification_form %}
+                <label class="field-group {% if field.name == 'note' or field.name == 'image' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% if field.name == "image" %}
+                        <small class="field-hint">Можно прикрепить фото текущего состояния ТМЦ.</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in verification_form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <div class="verification-submit-group">
+                <button class="primary-button" type="submit">Сохранить фотофиксацию</button>
+            </div>
+        </form>
+    {% else %}
+        <div class="empty-state">
+            <h3>Сверка пока закрыта</h3>
+            <p>{{ verification_lock_message }}</p>
         </div>
-    </form>
+    {% endif %}
 </section>
-
 
 <section class="panel">
     <div class="panel-header">

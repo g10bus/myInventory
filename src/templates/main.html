@@ -8,7 +8,8 @@
         <p class="eyebrow">Панель сотрудника</p>
         <h1>Инвентаризация закрепленных материальных ценностей</h1>
         <p class="hero-copy">
-            Контролируйте, какое оборудование закреплено за сотрудником, что требует сверки, а какие передачи сейчас находятся в работе.
+            Контролируйте, какое оборудование закреплено за сотрудником, что требует сверки,
+            а какие передачи сейчас находятся в работе.
         </p>
     </div>
     <div class="hero-side-note">
@@ -17,7 +18,6 @@
         <p>{{ user_data.position|default:"Должность не указана" }}</p>
     </div>
 </section>
-
 
 <section class="stats-grid">
     {% for stat in stats_cards %}
@@ -29,7 +29,48 @@
     {% endfor %}
 </section>
 
-
+{% if active_inventory_assignments or upcoming_inventory_assignments %}
+    <section class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Уведомления</p>
+                <h2>Назначенные инвентаризации</h2>
+            </div>
+            <span class="pill">{{ inventory_assignment_count }}</span>
+        </div>
+        <div class="list-stack">
+            {% for assignment in active_inventory_assignments %}
+                <div class="list-item">
+                    <div>
+                        <strong>Инвентаризация активна</strong>
+                        <p>
+                            Период: {{ assignment.date_from|date:"d.m.Y" }} - {{ assignment.date_to|date:"d.m.Y" }}
+                            {% if assignment.note %}• {{ assignment.note }}{% endif %}
+                        </p>
+                    </div>
+                    <div class="list-item-meta">
+                        <span class="status-badge status-in_use">Можно проводить</span>
+                        <a class="ghost-link" href="{% url 'mytmc' %}">Открыть мои ТМЦ</a>
+                    </div>
+                </div>
+            {% endfor %}
+            {% for assignment in upcoming_inventory_assignments %}
+                <div class="list-item">
+                    <div>
+                        <strong>Запланирована инвентаризация</strong>
+                        <p>
+                            Период: {{ assignment.date_from|date:"d.m.Y" }} - {{ assignment.date_to|date:"d.m.Y" }}
+                            {% if assignment.note %}• {{ assignment.note }}{% endif %}
+                        </p>
+                    </div>
+                    <div class="list-item-meta">
+                        <span class="status-badge status-reserve">Ожидает начала</span>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
 
 {% if user_data.is_administrator and ui_mode == "admin" %}
     <section class="summary-strip">
@@ -41,8 +82,6 @@
         {% endfor %}
     </section>
 {% endif %}
-
-
 
 <section class="content-grid">
     <article class="panel">
