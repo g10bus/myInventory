@@ -8,13 +8,13 @@
         <p class="eyebrow">Персональный список</p>
         <h1>Материальные ценности сотрудника</h1>
         <p class="hero-copy">
-            Здесь отображаются все ТМЦ, которые сейчас закреплены за сотрудником, с быстрым поиском по номеру, модели и статусу.
+            Здесь отображаются все ТМЦ, которые сейчас закреплены за сотрудником, с быстрым поиском и фильтрацией по статусу и категории.
         </p>
     </div>
 </section>
 
 <section class="panel">
-    <form class="filters-row" method="get">
+    <form class="filters-row filters-row-wide" method="get">
         <input class="text-input" type="text" name="q" placeholder="Поиск по названию, модели или инвентарному номеру" value="{{ query }}">
         <select class="select-input" name="status">
             <option value="">Все статусы</option>
@@ -22,42 +22,49 @@
                 <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
+        <select class="select-input" name="category">
+            <option value="">Все категории</option>
+            {% for category in category_choices %}
+                <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+        </select>
         <button class="primary-button" type="submit">Применить</button>
+        <a class="secondary-button" href="{% url 'mytmc' %}">Сбросить</a>
     </form>
 </section>
 
 <section class="asset-grid">
     {% for asset in assets %}
         <a class="asset-card-link" href="{% url 'mytmc-detail' inventory_number=asset.inventory_number %}">
-        <article class="asset-card asset-card-wide">
-            <div class="asset-card-top">
-                <span class="pill">{{ asset.category }}</span>
-                <span class="status-badge status-{{ asset.status }}">{{ asset.get_status_display }}</span>
-            </div>
-            <h3>{{ asset.title }}</h3>
-            <p>{{ asset.model_name|default:"Модель не указана" }}</p>
-            <div class="details-grid">
-                <div class="detail-item">
-                    <span>Инвентарный номер</span>
-                    <strong>{{ asset.inventory_number }}</strong>
+            <article class="asset-card asset-card-wide">
+                <div class="asset-card-top">
+                    <span class="pill">{{ asset.category }}</span>
+                    <span class="status-badge status-{{ asset.status }}">{{ asset.get_status_display }}</span>
                 </div>
-                <div class="detail-item">
-                    <span>Серийный номер</span>
-                    <strong>{{ asset.serial_number|default:"Не указан" }}</strong>
+                <h3>{{ asset.title }}</h3>
+                <p>{{ asset.model_name|default:"Модель не указана" }}</p>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <span>Инвентарный номер</span>
+                        <strong>{{ asset.inventory_number }}</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>Серийный номер</span>
+                        <strong>{{ asset.serial_number|default:"Не указан" }}</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>Локация</span>
+                        <strong>{{ asset.location|default:"Не указана" }}</strong>
+                    </div>
+                    <div class="detail-item">
+                        <span>Сверка до</span>
+                        <strong>{{ asset.next_verification_date|date:"d.m.Y"|default:"Не задана" }}</strong>
+                    </div>
                 </div>
-                <div class="detail-item">
-                    <span>Локация</span>
-                    <strong>{{ asset.location|default:"Не указана" }}</strong>
-                </div>
-                <div class="detail-item">
-                    <span>Сверка до</span>
-                    <strong>{{ asset.next_verification_date|date:"d.m.Y"|default:"Не задана" }}</strong>
-                </div>
-            </div>
-            {% if asset.notes %}
-                <div class="asset-note">{{ asset.notes }}</div>
-            {% endif %}
-        </article>
+                {% if asset.notes %}
+                    <div class="asset-note">{{ asset.notes }}</div>
+                {% endif %}
+            </article>
         </a>
     {% empty %}
         <div class="empty-state">

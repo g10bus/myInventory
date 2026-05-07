@@ -15,9 +15,33 @@
 </section>
 
 <section class="panel">
-    <form class="filters-row" method="get">
-        <input class="text-input" type="text" name="q" placeholder="Поиск по email, ФИО, телефону, отделу или должности" value="{{ query }}">
-        <button class="primary-button" type="submit">Найти</button>
+    <form class="search-stack" method="get">
+        <div class="search-row">
+            <input class="text-input" type="text" name="q" placeholder="Поиск по email, ФИО, телефону, отделу или должности" value="{{ query }}">
+            <button class="primary-button" type="submit">Найти</button>
+        </div>
+        <div class="filters-row filters-row-users-extended">
+            <select class="select-input" name="department">
+                <option value="">Все отделы</option>
+                {% for department in departments %}
+                    <option value="{{ department.id }}" {% if selected_department == department.id|stringformat:"s" %}selected{% endif %}>{{ department.name }}</option>
+                {% endfor %}
+            </select>
+            <select class="select-input" name="activity">
+                <option value="">Любой статус</option>
+                <option value="active" {% if selected_activity == "active" %}selected{% endif %}>Активные</option>
+                <option value="inactive" {% if selected_activity == "inactive" %}selected{% endif %}>Неактивные</option>
+            </select>
+            <select class="select-input" name="admin_access">
+                <option value="">Любой доступ</option>
+                <option value="admin" {% if selected_admin_access == "admin" %}selected{% endif %}>Только админы</option>
+                <option value="regular" {% if selected_admin_access == "regular" %}selected{% endif %}>Без админ-доступа</option>
+            </select>
+            <input class="text-input" type="number" name="assets_count_from" min="0" placeholder="ТМЦ от" value="{{ selected_assets_count_from }}">
+            <input class="text-input" type="number" name="assets_count_to" min="0" placeholder="ТМЦ до" value="{{ selected_assets_count_to }}">
+            <button class="primary-button" type="submit">Применить</button>
+            <a class="secondary-button" href="{% url 'user-admin' %}">Сбросить</a>
+        </div>
     </form>
 </section>
 
@@ -79,7 +103,7 @@
                         <td colspan="9">
                             <div class="empty-state">
                                 <h3>Сотрудники не найдены</h3>
-                                <p>Измените поисковый запрос.</p>
+                                <p>Измените поисковый запрос или фильтры.</p>
                             </div>
                         </td>
                     </tr>

@@ -3,7 +3,16 @@ from django.db.models import Count, Q
 from apps.accounts.models import User
 
 
-def get_manageable_users(query="", actor=None):
+def get_manageable_users(
+    query="",
+    actor=None,
+    department="",
+    activity="",
+    admin_access="",
+    assets_count_from=None,
+    assets_count_to=None,
+):
+    admin_query = Q(is_superuser=True) | Q(is_staff=True) | Q(groups__name__in=["system_admin", "inventory_operator"])
     users = (
         User.objects.select_related("department")
         .annotate(
@@ -28,4 +37,18 @@ def get_manageable_users(query="", actor=None):
             | Q(position__icontains=query)
             | Q(department__name__icontains=query)
         )
-    return users
+    if department:
+        users = users.filter(department_id=department)
+    if activity == "active":
+        users = users.filter(is_active=True)
+    elif activity == "inactive":
+        users = users.filter(is_active=False)
+    if admin_access == "admin":
+        users = users.filter(admin_query)
+    elif admin_access == "regular":
+        users = users.exclude(admin_query)
+    if assets_count_from is not None:
+        users = users.filter(current_assets_count__gte=assets_count_from)
+    if assets_count_to is not None:
+        users = users.filter(current_assets_count__lte=assets_count_to)
+    return users.distinct()

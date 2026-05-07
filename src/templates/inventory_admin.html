@@ -8,21 +8,48 @@
         <p class="eyebrow">Панель администратора</p>
         <h1>Все оборудование предприятия</h1>
         <p class="hero-copy">
-            Здесь администратор видит полный список ТМЦ, может фильтровать его и переходить к редактированию статусов и карточек оборудования.
+            Здесь администратор видит полный список ТМЦ, может фильтровать его и переходить к редактированию
+            статусов и карточек оборудования.
         </p>
     </div>
 </section>
 
 <section class="panel">
-    <form class="filters-row" method="get">
-        <input class="text-input" type="text" name="q" placeholder="Поиск по названию, номеру, модели или локации" value="{{ query }}">
-        <select class="select-input" name="status">
-            <option value="">Все статусы</option>
-            {% for value, label in status_choices %}
-                <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-        </select>
-        <button class="primary-button" type="submit">Применить</button>
+    <form class="search-stack" method="get">
+        <div class="search-row">
+            <input class="text-input" type="text" name="q" placeholder="Поиск по названию, номеру, модели или локации" value="{{ query }}">
+            <button class="primary-button" type="submit">Найти</button>
+        </div>
+        <div class="filters-row filters-row-assets-extended">
+            <select class="select-input" name="status">
+                <option value="">Все статусы</option>
+                {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select class="select-input" name="category">
+                <option value="">Все категории</option>
+                {% for category in category_choices %}
+                    <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>{{ category }}</option>
+                {% endfor %}
+            </select>
+            <select class="select-input" name="employee">
+                <option value="">Все сотрудники</option>
+                {% for employee in employee_choices %}
+                    <option value="{{ employee.id }}" {% if selected_employee == employee.id|stringformat:"s" %}selected{% endif %}>{{ employee.short_name }}</option>
+                {% endfor %}
+            </select>
+            <select class="select-input" name="location">
+                <option value="">Все локации</option>
+                {% for location in location_choices %}
+                    <option value="{{ location }}" {% if selected_location == location %}selected{% endif %}>{{ location }}</option>
+                {% endfor %}
+            </select>
+            <input class="text-input" type="date" name="verification_date_from" value="{{ selected_verification_date_from }}" title="Сверка от">
+            <input class="text-input" type="date" name="verification_date_to" value="{{ selected_verification_date_to }}" title="Сверка до">
+            <button class="primary-button" type="submit">Применить</button>
+            <a class="secondary-button" href="{% url 'asset-admin' %}">Сбросить</a>
+        </div>
     </form>
 </section>
 

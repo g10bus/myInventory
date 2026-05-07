@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.dateparse import parse_date
 from django.utils import timezone
 
 from apps.audit.models import AuditEvent
@@ -11,7 +12,13 @@ from apps.inventory.forms import AssetAdminForm, InventoryVerificationCreateForm
 from apps.inventory.models import Asset
 from apps.inventory.services import create_asset, record_verification, update_asset_details
 
-from ..selectors import get_all_assets, get_user_assets
+from ..selectors import (
+    get_all_assets,
+    get_asset_category_choices,
+    get_asset_employee_choices,
+    get_asset_location_choices,
+    get_user_assets,
+)
 
 
 def ensure_administrator(user):
@@ -131,7 +138,9 @@ def build_verification_form_initial(asset):
 def my_assets_view(request):
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "").strip()
-    assets = get_user_assets(request.user, query=query, status=status)
+    category = request.GET.get("category", "").strip()
+    assets = get_user_assets(request.user, query=query, status=status, category=category)
+    category_choices = get_asset_category_choices(get_user_assets(request.user))
     return render(
         request,
         "tmc.html",
@@ -140,7 +149,9 @@ def my_assets_view(request):
             "assets": assets,
             "query": query,
             "selected_status": status,
+            "selected_category": category,
             "status_choices": Asset.Status.choices,
+            "category_choices": category_choices,
         },
     )
 
@@ -193,7 +204,25 @@ def asset_admin_view(request):
     ensure_administrator(request.user)
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "").strip()
-    assets = get_all_assets(query=query, status=status)
+    category = request.GET.get("category", "").strip()
+    employee = request.GET.get("employee", "").strip()
+    location = request.GET.get("location", "").strip()
+    verification_date_from_raw = request.GET.get("verification_date_from", "").strip()
+    verification_date_to_raw = request.GET.get("verification_date_to", "").strip()
+    verification_date_from = parse_date(verification_date_from_raw) if verification_date_from_raw else None
+    verification_date_to = parse_date(verification_date_to_raw) if verification_date_to_raw else None
+    assets = get_all_assets(
+        query=query,
+        status=status,
+        category=category,
+        employee=employee,
+        location=location,
+        verification_date_from=verification_date_from,
+        verification_date_to=verification_date_to,
+    )
+    category_choices = get_asset_category_choices(get_all_assets())
+    employee_choices = get_asset_employee_choices()
+    location_choices = get_asset_location_choices(get_all_assets())
     return render(
         request,
         "inventory_admin.html",
@@ -202,7 +231,15 @@ def asset_admin_view(request):
             "assets": assets,
             "query": query,
             "selected_status": status,
+            "selected_category": category,
+            "selected_employee": employee,
+            "selected_location": location,
+            "selected_verification_date_from": verification_date_from_raw,
+            "selected_verification_date_to": verification_date_to_raw,
             "status_choices": Asset.Status.choices,
+            "category_choices": category_choices,
+            "employee_choices": employee_choices,
+            "location_choices": location_choices,
         },
     )
 

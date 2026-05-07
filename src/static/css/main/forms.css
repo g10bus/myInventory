@@ -1,6 +1,44 @@
-﻿.filters-row {
+.filters-row {
     grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.8fr) auto;
     align-items: end;
+}
+
+.search-stack {
+    display: grid;
+    gap: 14px;
+}
+
+.search-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.filters-row-wide {
+    grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(180px, 0.8fr)) auto auto;
+}
+
+.filters-row-users {
+    grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(170px, 0.8fr)) auto auto;
+}
+
+.filters-row-assets-extended {
+    grid-template-columns:
+        minmax(0, 1.5fr)
+        repeat(4, minmax(150px, 0.8fr))
+        repeat(2, minmax(150px, 0.75fr))
+        auto
+        auto;
+}
+
+.filters-row-users-extended {
+    grid-template-columns:
+        minmax(0, 1.45fr)
+        repeat(3, minmax(150px, 0.8fr))
+        repeat(2, minmax(120px, 0.65fr))
+        auto
+        auto;
 }
 
 .form-grid {
@@ -11,7 +49,6 @@
 .field-group-full {
     display: grid;
     align-self: end;
-
     gap: 6px;
 }
 
@@ -33,7 +70,7 @@
 .verification-submit-group {
     display: grid;
     align-self: end;
-    padding-bottom:0.3px;
+    padding-bottom: 0.3px;
 }
 
 .verification-submit-group::before {
@@ -46,8 +83,10 @@
 .verification-submit-group .primary-button {
     width: auto;
     min-width: 220px;
-    padding:12px 14px;
+    padding: 11px 14px;
 }
+
+
 
 .field-error,
 .field-hint {
@@ -132,4 +171,10 @@
 .secondary-button {
     background: #fff;
     color: var(--danger);
+}
+
+@media (max-width: 720px) {
+    .search-row {
+        grid-template-columns: 1fr;
+    }
 }

@@ -410,6 +410,118 @@ class WebPagesTestCase(TestCase):
         self.assertContains(response, self.employee.email)
         self.assertContains(response, self.asset.title)
 
+    def test_mytmc_filters_by_category(self):
+        extra_asset = Asset.objects.create(
+            category="РќРѕСѓС‚Р±СѓРє",
+            title="HP EliteBook",
+            model_name="840 G9",
+            inventory_number="INV-PAGE-002",
+            serial_number="SN-PAGE-002",
+            status=Asset.Status.IN_USE,
+            location="РћС„РёСЃ 2",
+        )
+        issue_asset(
+            asset=extra_asset,
+            employee=self.employee,
+            actor=self.admin,
+            note="Р’С‹РґР°С‡Р° РґР»СЏ С„РёР»СЊС‚СЂР°С†РёРё.",
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("mytmc"), {"category": self.asset.category})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.asset.title)
+        self.assertNotContains(response, extra_asset.title)
+
+    def test_inventory_admin_filters_by_category(self):
+        extra_asset = Asset.objects.create(
+            category="РќРѕСѓС‚Р±СѓРє",
+            title="MacBook Pro",
+            model_name="14",
+            inventory_number="INV-PAGE-003",
+            serial_number="SN-PAGE-003",
+            status=Asset.Status.RESERVE,
+            location="РЎРєР»Р°Рґ",
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("asset-admin"), {"category": self.asset.category})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.asset.title)
+        self.assertNotContains(response, extra_asset.title)
+
+    def test_inventory_admin_filters_by_employee_location_and_verification_date(self):
+        self.asset.next_verification_date = date(2026, 5, 20)
+        self.asset.save(update_fields=["next_verification_date"])
+
+        extra_asset = Asset.objects.create(
+            category="Принтер",
+            title="HP LaserJet",
+            model_name="M404",
+            inventory_number="INV-PAGE-004",
+            serial_number="SN-PAGE-004",
+            status=Asset.Status.IN_USE,
+            location="Склад",
+            next_verification_date=date(2026, 6, 15),
+        )
+        issue_asset(
+            asset=extra_asset,
+            employee=self.recipient,
+            actor=self.admin,
+            note="Выдача для проверки фильтров админа.",
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.get(
+            reverse("asset-admin"),
+            {
+                "employee": str(self.employee.pk),
+                "location": self.employee.office_location,
+                "verification_date_from": "2026-05-01",
+                "verification_date_to": "2026-05-31",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.asset.title)
+        self.assertNotContains(response, extra_asset.title)
+
+    def test_user_admin_filters_by_status_and_admin_access(self):
+        admin_group = Group.objects.create(name="system_admin")
+        self.employee.groups.add(admin_group)
+        self.recipient.is_active = False
+        self.recipient.save(update_fields=["is_active"])
+        self.client.force_login(self.admin)
+
+        response = self.client.get(
+            reverse("user-admin"),
+            {
+                "activity": "inactive",
+                "admin_access": "regular",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.recipient.email)
+        self.assertNotContains(response, self.employee.email)
+
+    def test_user_admin_filters_by_assets_count_range(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(
+            reverse("user-admin"),
+            {
+                "assets_count_from": "1",
+                "assets_count_to": "1",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.employee.email)
+        self.assertNotContains(response, self.recipient.email)
+
     def test_regular_user_does_not_see_switch_mode_button(self):
         self.client.force_login(self.employee)
 

@@ -11,6 +11,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.accounts.selectors import get_manageable_users
 from apps.custody.models import AssetAssignment, TransferRequest
+from apps.org.models import Department
 
 from ..forms import (
     AdminModeConfirmationForm,
@@ -36,6 +37,15 @@ def resolve_safe_next_url(request, next_url):
     ):
         return next_url
     return reverse("home")
+
+
+def parse_int_filter(value):
+    if not value:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def user_login_view(request):
@@ -158,7 +168,20 @@ def confirm_admin_ui_mode_view(request):
 def user_admin_view(request):
     ensure_administrator(request.user)
     query = request.GET.get("q", "").strip()
-    users = get_manageable_users(query=query, actor=request.user)
+    department = request.GET.get("department", "").strip()
+    activity = request.GET.get("activity", "").strip()
+    admin_access = request.GET.get("admin_access", "").strip()
+    assets_count_from = parse_int_filter(request.GET.get("assets_count_from", "").strip())
+    assets_count_to = parse_int_filter(request.GET.get("assets_count_to", "").strip())
+    users = get_manageable_users(
+        query=query,
+        actor=request.user,
+        department=department,
+        activity=activity,
+        admin_access=admin_access,
+        assets_count_from=assets_count_from,
+        assets_count_to=assets_count_to,
+    )
     return render(
         request,
         "user_admin.html",
@@ -166,6 +189,12 @@ def user_admin_view(request):
             "user_data": request.user,
             "users": users,
             "query": query,
+            "departments": Department.objects.all(),
+            "selected_department": department,
+            "selected_activity": activity,
+            "selected_admin_access": admin_access,
+            "selected_assets_count_from": request.GET.get("assets_count_from", "").strip(),
+            "selected_assets_count_to": request.GET.get("assets_count_to", "").strip(),
         },
     )
 
