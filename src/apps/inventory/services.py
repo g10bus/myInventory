@@ -1,7 +1,12 @@
 from django.utils import timezone
 
 from apps.audit.services import log_event
-from apps.inventory.models import Asset, InventoryVerification, InventoryVerificationImage
+from apps.inventory.models import (
+    Asset,
+    EmployeeInventoryAssignment,
+    InventoryVerification,
+    InventoryVerificationImage,
+)
 
 
 def create_asset(*, actor, data):
@@ -14,6 +19,32 @@ def create_asset(*, actor, data):
         metadata={"created": True},
     )
     return asset
+
+
+def create_employee_inventory_assignment(*, employee, actor, date_from, date_to, note=""):
+    assignment = EmployeeInventoryAssignment.objects.create(
+        employee=employee,
+        assigned_by=actor,
+        date_from=date_from,
+        date_to=date_to,
+        note=note,
+    )
+    log_event(
+        event_type="inventory_assignment_created",
+        actor=actor,
+        related_user=employee,
+        message=(
+            f"Сотруднику '{employee.full_name}' назначена инвентаризация "
+            f"с {date_from:%d.%m.%Y} по {date_to:%d.%m.%Y}."
+        ),
+        metadata={
+            "inventory_assignment_id": assignment.id,
+            "date_from": str(date_from),
+            "date_to": str(date_to),
+            "note": note,
+        },
+    )
+    return assignment
 
 
 def record_verification(

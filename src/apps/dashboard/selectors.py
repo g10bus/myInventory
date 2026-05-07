@@ -3,7 +3,7 @@ from django.utils import timezone
 
 from apps.custody.models import AssetAssignment, TransferRequest
 from apps.inventory.models import Asset
-from apps.inventory.selectors import get_user_assets
+from apps.inventory.selectors import get_user_assets, get_user_inventory_assignments
 
 
 def build_dashboard_context(user):
@@ -17,6 +17,9 @@ def build_dashboard_context(user):
         from_employee=user,
         status=TransferRequest.Status.PENDING,
     )
+    inventory_assignments = get_user_inventory_assignments(user)
+    active_inventory_assignments = inventory_assignments.filter(date_from__lte=today, date_to__gte=today)
+    upcoming_inventory_assignments = inventory_assignments.filter(date_from__gt=today)
 
     return {
         "stats_cards": [
@@ -68,4 +71,7 @@ def build_dashboard_context(user):
             .order_by("-requested_at")[:5]
         ),
         "user_assets": current_assets[:4],
+        "active_inventory_assignments": active_inventory_assignments,
+        "upcoming_inventory_assignments": upcoming_inventory_assignments[:5],
+        "inventory_assignment_count": active_inventory_assignments.count() + upcoming_inventory_assignments.count(),
     }

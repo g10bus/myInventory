@@ -4,20 +4,33 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
-from django.utils.dateparse import parse_date
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 
 from apps.audit.models import AuditEvent
-from apps.inventory.forms import AssetAdminForm, InventoryVerificationCreateForm
+from apps.inventory.forms import (
+    AssetAdminForm,
+    EmployeeInventoryAssignmentForm,
+    InventoryVerificationCreateForm,
+)
 from apps.inventory.models import Asset
-from apps.inventory.services import create_asset, record_verification, update_asset_details
+from apps.inventory.services import (
+    create_asset,
+    create_employee_inventory_assignment,
+    record_verification,
+    update_asset_details,
+)
 
 from ..selectors import (
+    get_active_inventory_assignment,
     get_all_assets,
     get_asset_category_choices,
     get_asset_employee_choices,
     get_asset_location_choices,
+    get_employee_inventory_assignment_choices,
+    get_employee_inventory_assignments,
     get_user_assets,
+    get_user_inventory_assignments,
 )
 
 
@@ -107,9 +120,7 @@ def build_verification_records(asset):
             {
                 "occurred_at": asset.last_verified_at,
                 "verified_by": "Не указан",
-                "responsible_person": (
-                    current_assignment.employee.full_name if current_assignment else "Не назначен"
-                ),
+                "responsible_person": current_assignment.employee.full_name if current_assignment else "Не назначен",
                 "location": asset.location,
                 "next_verification_date": asset.next_verification_date,
                 "message": "Данная запись создана автоматически.",
@@ -131,6 +142,51 @@ def build_verification_form_initial(asset):
     return {
         "location": location,
         "next_verification_date": asset.next_verification_date,
+    }
+
+
+def resolve_inventory_window(user):
+    assignments = get_user_inventory_assignments(user)
+    has_assignments = assignments.exists()
+    active_assignment = get_active_inventory_assignment(user)
+
+    if not has_assignments:
+        return {
+            "verification_allowed": True,
+            "active_inventory_assignment": None,
+            "verification_lock_message": "",
+            "upcoming_inventory_assignment": None,
+        }
+
+    upcoming_assignment = assignments.filter(date_from__gt=timezone.localdate()).first()
+    if active_assignment:
+        return {
+            "verification_allowed": True,
+            "active_inventory_assignment": active_assignment,
+            "verification_lock_message": "",
+            "upcoming_inventory_assignment": upcoming_assignment,
+        }
+
+    if upcoming_assignment:
+        lock_message = (
+            f"Инвентаризация будет доступна с {upcoming_assignment.date_from:%d.%m.%Y} "
+            f"по {upcoming_assignment.date_to:%d.%m.%Y}."
+        )
+    else:
+        last_assignment = assignments.filter(date_to__lt=timezone.localdate()).order_by("-date_to").first()
+        if last_assignment:
+            lock_message = (
+                f"Назначенный период инвентаризации завершился {last_assignment.date_to:%d.%m.%Y}. "
+                "Дождитесь нового назначения администратора."
+            )
+        else:
+            lock_message = "Проведение инвентаризации сейчас недоступно."
+
+    return {
+        "verification_allowed": False,
+        "active_inventory_assignment": None,
+        "verification_lock_message": lock_message,
+        "upcoming_inventory_assignment": upcoming_assignment,
     }
 
 
@@ -163,8 +219,13 @@ def my_asset_detail_view(request, inventory_number):
         inventory_number=inventory_number,
     )
     current_assignment = asset.current_assignment
+    inventory_window = resolve_inventory_window(request.user)
 
     if request.method == "POST":
+        if not inventory_window["verification_allowed"]:
+            messages.error(request, inventory_window["verification_lock_message"])
+            return redirect("mytmc-detail", inventory_number=asset.inventory_number)
+
         verification_form = InventoryVerificationCreateForm(request.POST, request.FILES)
         if verification_form.is_valid():
             record_verification(
@@ -195,6 +256,7 @@ def my_asset_detail_view(request, inventory_number):
             "verification_records": build_verification_records(asset),
             "verification_is_overdue": verification_is_overdue,
             "verification_form": verification_form,
+            **inventory_window,
         },
     )
 
@@ -240,6 +302,46 @@ def asset_admin_view(request):
             "category_choices": category_choices,
             "employee_choices": employee_choices,
             "location_choices": location_choices,
+        },
+    )
+
+
+@login_required
+def inventory_assignment_admin_view(request):
+    ensure_administrator(request.user)
+    employee_query = request.GET.get("employee_q", "").strip()
+    employee_choices = get_employee_inventory_assignment_choices()
+    form = EmployeeInventoryAssignmentForm(
+        request.POST or None,
+        employee_queryset=employee_choices,
+    )
+
+    if request.method == "POST" and form.is_valid():
+        assignment = create_employee_inventory_assignment(
+            employee=form.cleaned_data["employee"],
+            actor=request.user,
+            date_from=form.cleaned_data["date_from"],
+            date_to=form.cleaned_data["date_to"],
+            note=form.cleaned_data["note"],
+        )
+        messages.success(
+            request,
+            (
+                f"Инвентаризация назначена сотруднику "
+                f"{assignment.employee.full_name} на период "
+                f"{assignment.date_from:%d.%m.%Y} - {assignment.date_to:%d.%m.%Y}."
+            ),
+        )
+        return redirect("inventory-assignment-admin")
+
+    return render(
+        request,
+        "inventory_assignment_admin.html",
+        {
+            "user_data": request.user,
+            "form": form,
+            "employee_query": employee_query,
+            "assignment_history": get_employee_inventory_assignments(employee_query=employee_query),
         },
     )
 

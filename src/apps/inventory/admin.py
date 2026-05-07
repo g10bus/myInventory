@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Asset, InventoryVerification, InventoryVerificationImage
+from .models import Asset, EmployeeInventoryAssignment, InventoryVerification, InventoryVerificationImage
 
 
 class InventoryVerificationImageInline(admin.TabularInline):
@@ -52,3 +52,10 @@ class InventoryVerificationImageAdmin(admin.ModelAdmin):
     list_filter = ("created_at",)
     search_fields = ("verification__asset__inventory_number", "caption")
     autocomplete_fields = ("verification",)
+
+
+@admin.register(EmployeeInventoryAssignment)
+class EmployeeInventoryAssignmentAdmin(admin.ModelAdmin):
+    list_display = ("employee", "assigned_by", "date_from", "date_to", "created_at")
+    list_filter = ("date_from", "date_to")
+    search_fields = ("employee__email", "employee__last_name", "employee__first_name", "note")

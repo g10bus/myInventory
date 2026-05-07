@@ -1,8 +1,9 @@
 from django.db.models import Prefetch, Q
+from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.custody.models import AssetAssignment
-from apps.inventory.models import Asset
+from apps.inventory.models import Asset, EmployeeInventoryAssignment
 
 
 def get_asset_category_choices(queryset):
@@ -26,6 +27,15 @@ def get_asset_location_choices(queryset):
 def get_asset_employee_choices():
     return (
         User.objects.filter(asset_assignments__is_current=True)
+        .distinct()
+        .order_by("last_name", "first_name", "email")
+    )
+
+
+def get_employee_inventory_assignment_choices():
+    return (
+        User.objects.filter(is_active=True, asset_assignments__is_current=True)
+        .select_related("department")
         .distinct()
         .order_by("last_name", "first_name", "email")
     )
@@ -93,3 +103,40 @@ def get_all_assets(
     if verification_date_to:
         assets = assets.filter(next_verification_date__lte=verification_date_to)
     return assets
+
+
+def get_employee_inventory_assignments(*, employee_query=""):
+    assignments = (
+        EmployeeInventoryAssignment.objects.select_related("employee", "employee__department", "assigned_by")
+        .order_by("-date_from", "-created_at")
+    )
+    if employee_query:
+        assignments = assignments.filter(
+            Q(employee__email__icontains=employee_query)
+            | Q(employee__first_name__icontains=employee_query)
+            | Q(employee__last_name__icontains=employee_query)
+            | Q(employee__middle_name__icontains=employee_query)
+            | Q(employee__department__name__icontains=employee_query)
+        )
+    return assignments
+
+
+def get_user_inventory_assignments(user):
+    return (
+        EmployeeInventoryAssignment.objects.filter(employee=user)
+        .select_related("assigned_by")
+        .order_by("date_from", "date_to", "-created_at")
+    )
+
+
+def get_active_inventory_assignment(user, on_date=None):
+    target_date = on_date or timezone.localdate()
+    return (
+        EmployeeInventoryAssignment.objects.filter(
+            employee=user,
+            date_from__lte=target_date,
+            date_to__gte=target_date,
+        )
+        .order_by("date_from", "-created_at")
+        .first()
+    )
