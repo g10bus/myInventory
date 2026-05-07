@@ -108,7 +108,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const options = Array.from(select.options);
     searchInput.addEventListener("input", function () {
         const query = searchInput.value.trim().toLowerCase();
-        options.forEach(function (option, index) {
+        options.forEach(function (option) {
             if (!option.value) {
                 option.hidden = false;
                 return;

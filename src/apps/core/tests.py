@@ -524,7 +524,17 @@ class WebPagesTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Назначенные инвентаризации")
         self.assertContains(response, "Проведите сверку в рабочее время.")
-        self.assertContains(response, reverse("mytmc"))
+
+    def test_employee_cannot_open_verification_form_without_admin_assignment(self):
+        self.client.force_login(self.employee)
+
+        response = self.client.get(
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Сверка пока закрыта")
+        self.assertNotContains(response, "name=\"next_verification_date\"", html=False)
 
     def test_employee_cannot_submit_verification_outside_inventory_period(self):
         today = timezone.localdate()
@@ -539,7 +549,6 @@ class WebPagesTestCase(TestCase):
         response = self.client.post(
             reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
             {
-                "next_verification_date": "",
                 "location": self.employee.office_location,
                 "note": "Пытаюсь провести сверку раньше срока.",
                 "image_caption": "",
@@ -565,7 +574,6 @@ class WebPagesTestCase(TestCase):
         response = self.client.post(
             reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
             {
-                "next_verification_date": (today + timedelta(days=30)).isoformat(),
                 "location": self.employee.office_location,
                 "note": "Сверка проведена в активный период.",
                 "image_caption": "",

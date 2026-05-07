@@ -101,43 +101,41 @@
     </article>
 </section>
 
-{% if active_inventory_assignment or verification_lock_message %}
-    <section class="panel">
-        <div class="panel-header">
-            <div>
-                <p class="eyebrow">Назначение</p>
-                <h2>Окно проведения инвентаризации</h2>
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <p class="eyebrow">Окно проведения</p>
+            <h2>Доступ к инвентаризации</h2>
+        </div>
+    </div>
+    <div class="list-stack">
+        {% if active_inventory_assignment %}
+            <div class="list-item">
+                <div>
+                    <strong>Инвентаризация сейчас доступна</strong>
+                    <p>
+                        Период: {{ active_inventory_assignment.date_from|date:"d.m.Y" }} -
+                        {{ active_inventory_assignment.date_to|date:"d.m.Y" }}
+                        {% if active_inventory_assignment.note %}• {{ active_inventory_assignment.note }}{% endif %}
+                    </p>
+                </div>
+                <div class="list-item-meta">
+                    <span class="status-badge status-in_use">Активно</span>
+                </div>
             </div>
-        </div>
-        <div class="list-stack">
-            {% if active_inventory_assignment %}
-                <div class="list-item">
-                    <div>
-                        <strong>Инвентаризация сейчас доступна</strong>
-                        <p>
-                            Период: {{ active_inventory_assignment.date_from|date:"d.m.Y" }} -
-                            {{ active_inventory_assignment.date_to|date:"d.m.Y" }}
-                            {% if active_inventory_assignment.note %}• {{ active_inventory_assignment.note }}{% endif %}
-                        </p>
-                    </div>
-                    <div class="list-item-meta">
-                        <span class="status-badge status-in_use">Активно</span>
-                    </div>
+        {% else %}
+            <div class="list-item">
+                <div>
+                    <strong>Инвентаризация временно недоступна</strong>
+                    <p>{{ verification_lock_message }}</p>
                 </div>
-            {% else %}
-                <div class="list-item">
-                    <div>
-                        <strong>Инвентаризация временно недоступна</strong>
-                        <p>{{ verification_lock_message }}</p>
-                    </div>
-                    <div class="list-item-meta">
-                        <span class="status-badge status-reserve">Ожидание</span>
-                    </div>
+                <div class="list-item-meta">
+                    <span class="status-badge status-reserve">Закрыто</span>
                 </div>
-            {% endif %}
-        </div>
-    </section>
-{% endif %}
+            </div>
+        {% endif %}
+    </div>
+</section>
 
 <section class="panel">
     <div class="panel-header">

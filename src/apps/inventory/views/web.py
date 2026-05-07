@@ -141,7 +141,49 @@ def build_verification_form_initial(asset):
 
     return {
         "location": location,
-        "next_verification_date": asset.next_verification_date,
+    }
+
+
+def resolve_inventory_window(user):
+    assignments = get_user_inventory_assignments(user)
+    active_assignment = get_active_inventory_assignment(user)
+
+    if active_assignment:
+        return {
+            "verification_allowed": True,
+            "active_inventory_assignment": active_assignment,
+            "verification_lock_message": "",
+        }
+
+    upcoming_assignment = assignments.filter(date_from__gt=timezone.localdate()).first()
+    if upcoming_assignment:
+        return {
+            "verification_allowed": False,
+            "active_inventory_assignment": None,
+            "verification_lock_message": (
+                f"Инвентаризация будет доступна с {upcoming_assignment.date_from:%d.%m.%Y} "
+                f"по {upcoming_assignment.date_to:%d.%m.%Y}."
+            ),
+        }
+
+    expired_assignment = assignments.filter(date_to__lt=timezone.localdate()).order_by("-date_to").first()
+    if expired_assignment:
+        return {
+            "verification_allowed": False,
+            "active_inventory_assignment": None,
+            "verification_lock_message": (
+                f"Назначенный период инвентаризации завершился {expired_assignment.date_to:%d.%m.%Y}. "
+                "Дождитесь нового назначения администратора."
+            ),
+        }
+
+    return {
+        "verification_allowed": False,
+        "active_inventory_assignment": None,
+        "verification_lock_message": (
+            "Инвентаризация пока не назначена администратором. "
+            "Проведение сверки откроется только в утвержденный период."
+        ),
     }
 
 
@@ -231,7 +273,6 @@ def my_asset_detail_view(request, inventory_number):
             record_verification(
                 asset=asset,
                 actor=request.user,
-                next_verification_date=verification_form.cleaned_data["next_verification_date"],
                 note=verification_form.cleaned_data["note"],
                 location=verification_form.cleaned_data["location"],
                 image=verification_form.cleaned_data["image"],

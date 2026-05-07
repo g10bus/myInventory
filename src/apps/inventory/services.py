@@ -1,5 +1,6 @@
 from django.utils import timezone
 
+from apps.audit.models import AuditEvent
 from apps.audit.services import log_event
 from apps.inventory.models import (
     Asset,
@@ -12,7 +13,7 @@ from apps.inventory.models import (
 def create_asset(*, actor, data):
     asset = Asset.objects.create(**data)
     log_event(
-        event_type="asset_updated",
+        event_type=AuditEvent.EventType.ASSET_UPDATED,
         actor=actor,
         asset=asset,
         message=f"Создана карточка ТМЦ '{asset.title}'.",
@@ -30,7 +31,7 @@ def create_employee_inventory_assignment(*, employee, actor, date_from, date_to,
         note=note,
     )
     log_event(
-        event_type="inventory_assignment_created",
+        event_type=AuditEvent.EventType.INVENTORY_ASSIGNMENT_CREATED,
         actor=actor,
         related_user=employee,
         message=(
@@ -62,13 +63,17 @@ def record_verification(
     if not resolved_location and current_assignment:
         resolved_location = current_assignment.location_at_issue
 
+    resolved_next_verification_date = (
+        asset.next_verification_date if next_verification_date is None else next_verification_date
+    )
+
     verification = InventoryVerification.objects.create(
         asset=asset,
         verified_at=timezone.now(),
         verified_by=actor,
         responsible_employee=current_assignment.employee if current_assignment else None,
         location=resolved_location,
-        next_verification_date=next_verification_date,
+        next_verification_date=resolved_next_verification_date,
         notes=note,
     )
 
@@ -80,18 +85,18 @@ def record_verification(
         )
 
     asset.last_verified_at = timezone.localdate()
-    asset.next_verification_date = next_verification_date
+    asset.next_verification_date = resolved_next_verification_date
     asset.save(update_fields=["last_verified_at", "next_verification_date", "updated_at"])
 
     log_event(
-        event_type="asset_verified",
+        event_type=AuditEvent.EventType.ASSET_VERIFIED,
         actor=actor,
         related_user=current_assignment.employee if current_assignment else None,
         asset=asset,
         message=note or f"Для ТМЦ '{asset.title}' зафиксирована сверка.",
         metadata={
             "location": resolved_location,
-            "next_verification_date": str(next_verification_date) if next_verification_date else "",
+            "next_verification_date": str(resolved_next_verification_date) if resolved_next_verification_date else "",
             "verification_id": verification.id,
             "image_attached": bool(image),
         },
@@ -103,7 +108,7 @@ def write_off_asset(*, asset, actor, note=""):
     asset.status = Asset.Status.BROKEN
     asset.save(update_fields=["status", "updated_at"])
     log_event(
-        event_type="asset_written_off",
+        event_type=AuditEvent.EventType.ASSET_WRITTEN_OFF,
         actor=actor,
         asset=asset,
         message=note or f"ТМЦ '{asset.title}' переведено в статус списания.",
@@ -125,7 +130,7 @@ def update_asset_details(*, asset, actor, data):
 
     asset.save(update_fields=[*changed_fields, "updated_at"])
     log_event(
-        event_type="asset_updated",
+        event_type=AuditEvent.EventType.ASSET_UPDATED,
         actor=actor,
         asset=asset,
         message=f"Карточка ТМЦ '{asset.title}' обновлена администратором.",

@@ -47,11 +47,6 @@ class AssetAdminForm(forms.ModelForm):
 
 
 class InventoryVerificationCreateForm(forms.Form):
-    next_verification_date = forms.DateField(
-        required=False,
-        label="Следующая сверка",
-        widget=forms.DateInput(attrs={"class": "text-input", "type": "date"}),
-    )
     location = forms.CharField(
         required=False,
         label="Локация фиксации",
@@ -116,7 +111,7 @@ class EmployeeInventoryAssignmentForm(forms.Form):
             attrs={
                 "class": "textarea-input",
                 "rows": 4,
-                "placeholder": "Например: нужно подтвердить фактическое наличие и актуальную локацию всех закреплённых ТМЦ.",
+                "placeholder": "Например: нужно подтвердить фактическое наличие и актуальную локацию всех закрепленных ТМЦ.",
             }
         ),
     )
