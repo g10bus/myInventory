@@ -31,16 +31,16 @@
 
 
 
-<section class="summary-strip">
-    {% for item in overall_summary %}
-        {% if user_data.is_administrator %}
+{% if user_data.is_administrator and ui_mode == "admin" %}
+    <section class="summary-strip">
+        {% for item in overall_summary %}
             <article class="summary-card">
                 <span class="summary-label">{{ item.label }}</span>
                 <strong>{{ item.value }}</strong>
             </article>
-        {% endif %}
-    {% endfor %}
-</section>
+        {% endfor %}
+    </section>
+{% endif %}
 
 
 

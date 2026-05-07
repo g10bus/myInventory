@@ -4,10 +4,12 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.accounts.selectors import get_manageable_users
 from apps.custody.models import AssetAssignment, TransferRequest
 
+from ..ui import ADMIN_UI_MODE, set_user_interface_mode
 from ..forms import (
     LoginForm,
     ProfileSettingsForm,
@@ -92,6 +94,32 @@ def profile_view(request):
             "transfer_count": transfer_count,
         },
     )
+
+
+@login_required
+def switch_ui_mode_view(request):
+    if request.method != "POST":
+        raise PermissionDenied("Смена режима интерфейса доступна только через POST-запрос.")
+
+    requested_mode = request.POST.get("mode")
+    if requested_mode == ADMIN_UI_MODE and not request.user.is_administrator:
+        raise PermissionDenied("Переключение в режим администратора недоступно.")
+
+    current_mode = set_user_interface_mode(request, requested_mode)
+    if current_mode == ADMIN_UI_MODE:
+        messages.success(request, "Включён режим администратора.")
+    else:
+        messages.success(request, "Включён обычный режим.")
+
+    next_url = request.POST.get("next", "")
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(next_url)
+
+    return redirect("home")
 
 
 @login_required

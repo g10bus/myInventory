@@ -377,6 +377,45 @@ class WebPagesTestCase(TestCase):
         self.assertContains(response, self.employee.email)
         self.assertContains(response, self.asset.title)
 
+    def test_regular_user_does_not_see_switch_mode_button(self):
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("profile"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, reverse("switch-ui-mode"))
+        self.assertNotContains(response, reverse("asset-admin"))
+
+    def test_admin_can_switch_interface_mode(self):
+        self.client.force_login(self.admin)
+
+        default_response = self.client.get(reverse("profile"))
+        self.assertContains(default_response, reverse("switch-ui-mode"))
+        self.assertNotContains(default_response, reverse("asset-admin"))
+
+        switch_response = self.client.post(
+            reverse("switch-ui-mode"),
+            {
+                "mode": "admin",
+                "next": reverse("profile"),
+            },
+        )
+
+        self.assertRedirects(switch_response, reverse("profile"))
+        self.assertEqual(self.client.session.get("ui_mode"), "admin")
+
+        admin_response = self.client.get(reverse("profile"))
+        self.assertContains(admin_response, reverse("asset-admin"))
+        self.assertContains(admin_response, "Перейти в обычный режим")
+
+    def test_regular_user_cannot_switch_to_admin_mode(self):
+        self.client.force_login(self.employee)
+
+        response = self.client.post(reverse("switch-ui-mode"), {"mode": "admin"})
+
+        self.assertEqual(response.status_code, 403)
+        self.assertNotEqual(self.client.session.get("ui_mode"), "admin")
+
     def test_registration_page_is_rendered(self):
         response = self.client.get(reverse("register"))
 
