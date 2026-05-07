@@ -23,6 +23,13 @@
     align-items: start;
 }
 
+.form-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
 .verification-submit-group {
     display: grid;
     align-self: end;
@@ -103,8 +110,13 @@
 .primary-button,
 .secondary-button {
     padding: 11px 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     font-weight: 800;
+    text-align: center;
+    text-decoration: none;
     transition: 0.2s ease;
 }
 

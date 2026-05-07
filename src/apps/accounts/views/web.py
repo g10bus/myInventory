@@ -1,27 +1,41 @@
+from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.accounts.selectors import get_manageable_users
 from apps.custody.models import AssetAssignment, TransferRequest
 
-from ..ui import ADMIN_UI_MODE, set_user_interface_mode
 from ..forms import (
+    AdminModeConfirmationForm,
     LoginForm,
     ProfileSettingsForm,
     RegistrationForm,
     StyledPasswordChangeForm,
     UserAdminManageForm,
 )
+from ..ui import ADMIN_UI_MODE, set_user_interface_mode
 
 
 def ensure_administrator(user):
     if not user.is_administrator:
         raise PermissionDenied("Доступ разрешён только администраторам.")
+
+
+def resolve_safe_next_url(request, next_url):
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+    return reverse("home")
 
 
 def user_login_view(request):
@@ -61,16 +75,16 @@ def profile_view(request):
             profile_form = ProfileSettingsForm(request.POST, request.FILES, instance=request.user)
             if profile_form.is_valid():
                 profile_form.save()
-                messages.success(request, "Профиль обновлен.")
+                messages.success(request, "Профиль обновлён.")
                 return redirect("profile")
-            messages.error(request, "Не удалось обновить профиль. Проверьте введенные данные.")
+            messages.error(request, "Не удалось обновить профиль. Проверьте введённые данные.")
 
         elif action == "change_password":
             password_form = StyledPasswordChangeForm(user=request.user, data=request.POST)
             if password_form.is_valid():
                 user = password_form.save()
                 update_session_auth_hash(request, user)
-                messages.success(request, "Пароль успешно изменен.")
+                messages.success(request, "Пароль успешно изменён.")
                 return redirect("profile")
             messages.error(request, "Не удалось изменить пароль. Проверьте форму.")
 
@@ -102,31 +116,49 @@ def switch_ui_mode_view(request):
         raise PermissionDenied("Смена режима интерфейса доступна только через POST-запрос.")
 
     requested_mode = request.POST.get("mode")
-    if requested_mode == ADMIN_UI_MODE and not request.user.is_administrator:
-        raise PermissionDenied("Переключение в режим администратора недоступно.")
+    next_url = resolve_safe_next_url(request, request.POST.get("next", ""))
 
-    current_mode = set_user_interface_mode(request, requested_mode)
-    if current_mode == ADMIN_UI_MODE:
-        messages.success(request, "Включён режим администратора.")
-    else:
-        messages.success(request, "Включён обычный режим.")
+    if requested_mode == ADMIN_UI_MODE:
+        ensure_administrator(request.user)
+        confirm_url = reverse("confirm-admin-ui-mode")
+        return redirect(f"{confirm_url}?{urlencode({'next': next_url})}")
 
-    next_url = request.POST.get("next", "")
-    if next_url and url_has_allowed_host_and_scheme(
-        next_url,
-        allowed_hosts={request.get_host()},
-        require_https=request.is_secure(),
-    ):
-        return redirect(next_url)
+    set_user_interface_mode(request, requested_mode)
+    messages.success(request, "Включён обычный режим.")
+    return redirect(next_url)
 
-    return redirect("home")
+
+@login_required
+def confirm_admin_ui_mode_view(request):
+    ensure_administrator(request.user)
+    next_url = resolve_safe_next_url(request, request.POST.get("next") or request.GET.get("next", ""))
+    form = AdminModeConfirmationForm(user=request.user)
+
+    if request.method == "POST":
+        form = AdminModeConfirmationForm(request.POST, user=request.user)
+        if form.is_valid():
+            set_user_interface_mode(request, ADMIN_UI_MODE)
+            messages.success(request, "Включён режим администратора.")
+            return redirect(next_url)
+
+        messages.error(request, "Не удалось подтвердить пароль.")
+
+    return render(
+        request,
+        "confirm_admin_mode.html",
+        {
+            "user_data": request.user,
+            "form": form,
+            "next_url": next_url,
+        },
+    )
 
 
 @login_required
 def user_admin_view(request):
     ensure_administrator(request.user)
     query = request.GET.get("q", "").strip()
-    users = get_manageable_users(query=query)
+    users = get_manageable_users(query=query, actor=request.user)
     return render(
         request,
         "user_admin.html",
@@ -141,7 +173,7 @@ def user_admin_view(request):
 @login_required
 def user_edit_view(request, user_id):
     ensure_administrator(request.user)
-    managed_user = get_object_or_404(get_manageable_users(), pk=user_id)
+    managed_user = get_object_or_404(get_manageable_users(actor=request.user), pk=user_id)
     current_assignments = (
         AssetAssignment.objects.filter(employee=managed_user, is_current=True)
         .select_related("asset")

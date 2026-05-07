@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import authenticate
 from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
+from django.contrib.auth.models import Group
 
 from .models import User
 
@@ -22,6 +23,9 @@ class LoginForm(forms.Form):
         email = cleaned_data.get("email")
         password = cleaned_data.get("password")
         if email and password:
+            existing_user = User.objects.filter(email__iexact=email).first()
+            if existing_user and existing_user.check_password(password) and not existing_user.is_active:
+                raise forms.ValidationError("Ваш аккаунт заблокирован. Вход в систему недоступен.")
             self.user = authenticate(email=email, password=password)
             if self.user is None:
                 raise forms.ValidationError("Неверная почта или пароль.")
@@ -112,15 +116,41 @@ class StyledPasswordChangeForm(PasswordChangeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
-            field.widget.attrs.update(
-                {
-                    "class": "text-input",
-                }
-            )
+            field.widget.attrs.update({"class": "text-input"})
+
+
+class AdminModeConfirmationForm(forms.Form):
+    password = forms.CharField(
+        label="Текущий пароль",
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "text-input",
+                "autocomplete": "current-password",
+                "placeholder": "Введите текущий пароль",
+            }
+        ),
+    )
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        if not self.user or not self.user.check_password(password):
+            raise forms.ValidationError("Указан неверный пароль.")
+        return password
 
 
 class UserAdminManageForm(forms.ModelForm):
     remove_avatar = forms.BooleanField(required=False, label="Удалить текущий аватар")
+    blocked_user = forms.BooleanField(required=False, label="Заблокировать пользователя")
+    administrator_access = forms.BooleanField(
+        required=False,
+        label="Админ-доступ",
+        help_text="Даёт доступ к админ-режиму и административным разделам.",
+    )
 
     class Meta:
         model = User
@@ -135,7 +165,6 @@ class UserAdminManageForm(forms.ModelForm):
             "position",
             "office_location",
             "department",
-            "is_active",
             "is_staff",
             "is_superuser",
         )
@@ -162,7 +191,6 @@ class UserAdminManageForm(forms.ModelForm):
             "position": "Должность",
             "office_location": "Локация",
             "department": "Отдел",
-            "is_active": "Активный пользователь",
             "is_staff": "Доступ к staff-функциям",
             "is_superuser": "Полный доступ суперпользователя",
         }
@@ -171,16 +199,34 @@ class UserAdminManageForm(forms.ModelForm):
         self.actor = actor
         super().__init__(*args, **kwargs)
         self.fields["avatar"].required = False
+        self.fields["blocked_user"].initial = not self.instance.is_active
+        self.fields["administrator_access"].initial = self.instance.is_administrator
 
         if not actor or not actor.is_superuser:
             self.fields.pop("is_staff", None)
             self.fields.pop("is_superuser", None)
+        else:
+            self.fields.pop("is_staff", None)
+
+        if not actor or not self.instance.pk or actor.pk == self.instance.pk:
+            self.fields.pop("administrator_access", None)
 
     def clean_email(self):
         email = self.cleaned_data["email"].lower()
         if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError("Пользователь с такой почтой уже существует.")
         return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if (
+            "administrator_access" in self.fields
+            and self.actor
+            and self.instance.pk
+            and self.actor.pk == self.instance.pk
+        ):
+            raise forms.ValidationError("Нельзя менять собственный админ-доступ через эту форму.")
+        return cleaned_data
 
     def save(self, commit=True):
         existing_avatar = None
@@ -198,4 +244,20 @@ class UserAdminManageForm(forms.ModelForm):
 
         self.instance.email = self.cleaned_data["email"].lower()
         self.instance.username = self.instance.email
-        return super().save(commit=commit)
+        self.instance.is_active = not self.cleaned_data.get("blocked_user", False)
+        instance = super().save(commit=commit)
+
+        if "administrator_access" in self.fields and instance.pk:
+            admin_group, _ = Group.objects.get_or_create(name="system_admin")
+            operator_group, _ = Group.objects.get_or_create(name="inventory_operator")
+            should_have_admin_access = self.cleaned_data.get("administrator_access", False)
+
+            if should_have_admin_access:
+                instance.groups.add(admin_group)
+            else:
+                instance.groups.remove(admin_group, operator_group)
+                if not instance.is_superuser and instance.is_staff:
+                    instance.is_staff = False
+                    instance.save(update_fields=["is_staff"])
+
+        return instance

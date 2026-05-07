@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.contrib.auth.models import Group
 from django.test import TestCase
 from django.urls import reverse
 
@@ -71,6 +72,22 @@ class WebUserFlowsTestCase(TestCase):
             department=self.department,
             is_staff=is_staff,
         )
+
+    def _build_user_admin_payload(self, user, **overrides):
+        payload = {
+            "email": user.email,
+            "last_name": user.last_name,
+            "first_name": user.first_name,
+            "middle_name": user.middle_name,
+            "phone": user.phone,
+            "role": user.role,
+            "position": user.position,
+            "office_location": user.office_location,
+            "department": user.department_id or "",
+            "blocked_user": "" if user.is_active else "on",
+        }
+        payload.update(overrides)
+        return payload
 
     def test_registration_and_login_user(self):
         registration_response = self.client.post(
@@ -322,6 +339,22 @@ class WebPagesTestCase(TestCase):
             is_staff=is_staff,
         )
 
+    def _build_user_admin_payload(self, user, **overrides):
+        payload = {
+            "email": user.email,
+            "last_name": user.last_name,
+            "first_name": user.first_name,
+            "middle_name": user.middle_name,
+            "phone": user.phone,
+            "role": user.role,
+            "position": user.position,
+            "office_location": user.office_location,
+            "department": user.department_id or "",
+            "blocked_user": "" if user.is_active else "on",
+        }
+        payload.update(overrides)
+        return payload
+
     def test_dashboard_page_is_rendered(self):
         self.client.force_login(self.employee)
 
@@ -386,7 +419,7 @@ class WebPagesTestCase(TestCase):
         self.assertNotContains(response, reverse("switch-ui-mode"))
         self.assertNotContains(response, reverse("asset-admin"))
 
-    def test_admin_can_switch_interface_mode(self):
+    def legacy_test_admin_can_switch_interface_mode(self):
         self.client.force_login(self.admin)
 
         default_response = self.client.get(reverse("profile"))
@@ -415,6 +448,148 @@ class WebPagesTestCase(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertNotEqual(self.client.session.get("ui_mode"), "admin")
+
+    def test_admin_can_open_mode_confirmation_page(self):
+        self.client.force_login(self.admin)
+
+        profile_response = self.client.get(reverse("profile"))
+
+        self.assertEqual(profile_response.status_code, 200)
+        self.assertContains(profile_response, reverse("confirm-admin-ui-mode"))
+        self.assertNotContains(profile_response, reverse("asset-admin"))
+
+        confirm_response = self.client.get(
+            reverse("confirm-admin-ui-mode"),
+            {
+                "next": reverse("profile"),
+            },
+        )
+
+        self.assertEqual(confirm_response.status_code, 200)
+        self.assertTemplateUsed(confirm_response, "confirm_admin_mode.html")
+        self.assertContains(confirm_response, "Подтвердите пароль")
+
+    def test_admin_can_switch_interface_mode_after_password_confirmation(self):
+        self.client.force_login(self.admin)
+
+        switch_response = self.client.post(
+            reverse("confirm-admin-ui-mode"),
+            {
+                "password": "StrongPass123!",
+                "next": reverse("profile"),
+            },
+        )
+
+        self.assertRedirects(switch_response, reverse("profile"))
+        self.assertEqual(self.client.session.get("ui_mode"), "admin")
+
+        admin_response = self.client.get(reverse("profile"))
+        self.assertContains(admin_response, reverse("asset-admin"))
+        self.assertContains(admin_response, "РџРµСЂРµР№С‚Рё РІ РѕР±С‹С‡РЅС‹Р№ СЂРµР¶РёРј")
+
+    def test_admin_cannot_switch_interface_mode_with_invalid_password(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("confirm-admin-ui-mode"),
+            {
+                "password": "WrongPass123!",
+                "next": reverse("profile"),
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "confirm_admin_mode.html")
+        self.assertContains(response, "Указан неверный пароль.")
+        self.assertNotEqual(self.client.session.get("ui_mode"), "admin")
+
+    def test_regular_user_cannot_open_admin_mode_confirmation_page(self):
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("confirm-admin-ui-mode"))
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_can_grant_admin_access_to_other_user(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("user-edit", kwargs={"user_id": self.employee.pk}),
+            self._build_user_admin_payload(
+                self.employee,
+                administrator_access="on",
+            ),
+        )
+
+        self.assertRedirects(response, reverse("user-admin"))
+        self.employee.refresh_from_db()
+        self.assertTrue(self.employee.is_administrator)
+        self.assertTrue(self.employee.groups.filter(name="system_admin").exists())
+
+    def test_admin_can_revoke_admin_access_from_other_user(self):
+        admin_group = Group.objects.create(name="system_admin")
+        self.employee.groups.add(admin_group)
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("user-edit", kwargs={"user_id": self.employee.pk}),
+            self._build_user_admin_payload(self.employee),
+        )
+
+        self.assertRedirects(response, reverse("user-admin"))
+        self.employee.refresh_from_db()
+        self.assertFalse(self.employee.groups.filter(name="system_admin").exists())
+
+    def test_admin_can_block_user(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("user-edit", kwargs={"user_id": self.employee.pk}),
+            self._build_user_admin_payload(
+                self.employee,
+                blocked_user="on",
+            ),
+        )
+
+        self.assertRedirects(response, reverse("user-admin"))
+        self.employee.refresh_from_db()
+        self.assertFalse(self.employee.is_active)
+
+    def test_blocked_user_cannot_login(self):
+        self.employee.is_active = False
+        self.employee.save(update_fields=["is_active"])
+
+        response = self.client.post(
+            reverse("login"),
+            {
+                "email": self.employee.email,
+                "password": "StrongPass123!",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "login.html")
+        self.assertIsNone(self.client.session.get("_auth_user_id"))
+
+    def test_blocked_user_is_logged_out_from_active_session(self):
+        self.client.force_login(self.employee)
+        self.employee.is_active = False
+        self.employee.save(update_fields=["is_active"])
+
+        response = self.client.get(reverse("home"))
+
+        self.assertRedirects(response, reverse("login"))
+        self.assertIsNone(self.client.session.get("_auth_user_id"))
+
+    def test_admin_cannot_manage_self_in_user_admin(self):
+        self.client.force_login(self.admin)
+
+        list_response = self.client.get(reverse("user-admin"))
+        edit_response = self.client.get(reverse("user-edit", kwargs={"user_id": self.admin.pk}))
+
+        self.assertEqual(list_response.status_code, 200)
+        self.assertNotContains(list_response, reverse("user-edit", kwargs={"user_id": self.admin.pk}))
+        self.assertEqual(edit_response.status_code, 404)
 
     def test_registration_page_is_rendered(self):
         response = self.client.get(reverse("register"))

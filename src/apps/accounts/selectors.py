@@ -3,7 +3,7 @@ from django.db.models import Count, Q
 from apps.accounts.models import User
 
 
-def get_manageable_users(query=""):
+def get_manageable_users(query="", actor=None):
     users = (
         User.objects.select_related("department")
         .annotate(
@@ -15,6 +15,8 @@ def get_manageable_users(query=""):
         )
         .order_by("last_name", "first_name", "email")
     )
+    if actor and actor.pk:
+        users = users.exclude(pk=actor.pk)
     if query:
         users = users.filter(
             Q(email__icontains=query)

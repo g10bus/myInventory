@@ -8,7 +8,7 @@
         <p class="eyebrow">Управление профилем</p>
         <h1>{{ managed_user.full_name|default:managed_user.email }}</h1>
         <p class="hero-copy">
-            Администратор может обновить контакты, должность, отдел, активность и права сотрудника.
+            Администратор может обновить контакты, должность, отдел, активность и административный доступ сотрудника.
         </p>
     </div>
     <div class="hero-side-note">
@@ -33,6 +33,9 @@
                 <label class="field-group {% if field.name == 'avatar' %}field-group-full{% endif %}">
                     <span>{{ field.label }}</span>
                     {{ field }}
+                    {% if field.help_text %}
+                        <span class="field-hint">{{ field.help_text }}</span>
+                    {% endif %}
                     {% for error in field.errors %}
                         <span class="field-error">{{ error }}</span>
                     {% endfor %}
@@ -67,7 +70,11 @@
             </div>
             <div class="detail-item">
                 <span>Статус</span>
-                <strong>{% if managed_user.is_active %}Активный{% else %}Отключен{% endif %}</strong>
+                <strong>{% if managed_user.is_active %}Активный{% else %}Неактивный{% endif %}</strong>
+            </div>
+            <div class="detail-item">
+                <span>Админ-доступ</span>
+                <strong>{% if managed_user.is_administrator %}Есть{% else %}Нет{% endif %}</strong>
             </div>
         </div>
         <div class="panel-header">

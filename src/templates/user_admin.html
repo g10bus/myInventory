@@ -38,6 +38,7 @@
                     <th>Отдел</th>
                     <th>Должность</th>
                     <th>Роль</th>
+                    <th>Админ-доступ</th>
                     <th>ТМЦ</th>
                     <th>Статус</th>
                     <th></th>
@@ -54,12 +55,19 @@
                         <td>{{ employee.department.name|default:"Без отдела" }}</td>
                         <td>{{ employee.position|default:"Не указана" }}</td>
                         <td>{{ employee.role }}</td>
+                        <td>
+                            {% if employee.is_administrator %}
+                                <span class="status-badge status-in_use">Есть</span>
+                            {% else %}
+                                <span class="status-badge status-reserve">Нет</span>
+                            {% endif %}
+                        </td>
                         <td>{{ employee.current_assets_count }}</td>
                         <td>
                             {% if employee.is_active %}
                                 <span class="status-badge status-in_use">Активен</span>
                             {% else %}
-                                <span class="status-badge status-broken">Отключен</span>
+                                <span class="status-badge status-broken">Неактивный</span>
                             {% endif %}
                         </td>
                         <td class="table-actions">
@@ -68,7 +76,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="8">
+                        <td colspan="9">
                             <div class="empty-state">
                                 <h3>Сотрудники не найдены</h3>
                                 <p>Измените поисковый запрос.</p>

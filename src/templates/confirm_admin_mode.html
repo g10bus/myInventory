@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Подтверждение входа{% endblock %}
+
+{% block content %}
+<section class="hero-card hero-card-compact">
+    <div>
+        <p class="eyebrow">Подтверждение доступа</p>
+        <h1>Вход в админ-режим</h1>
+        <p class="hero-copy">
+            Для перехода в административный интерфейс подтвердите текущий пароль вашей учётной записи.
+        </p>
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <p class="eyebrow">Безопасность</p>
+                <h2>Подтвердите пароль</h2>
+            </div>
+        </div>
+        <form class="form-grid profile-settings-form" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+            <label class="field-group field-group-full">
+                <span>{{ form.password.label }}</span>
+                {{ form.password }}
+                <span class="field-hint">Без верного пароля вход в админ-режим не будет выполнен.</span>
+                {% for error in form.password.errors %}
+                    <span class="field-error">{{ error }}</span>
+                {% endfor %}
+            </label>
+            {% for error in form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <div class="form-actions">
+                <button class="primary-button" type="submit">Подтвердить</button>
+                <a class="secondary-button" href="{{ next_url }}">Отмена</a>
+            </div>
+        </form>
+    </article>
+</section>
+{% endblock %}
