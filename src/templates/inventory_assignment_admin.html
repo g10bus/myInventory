@@ -23,19 +23,6 @@
             </div>
         </div>
 
-        <div class="field-group">
-            <span>Поиск сотрудника</span>
-            <input
-                class="text-input select-search-input"
-                type="text"
-                id="employee-search-input"
-                data-select-target="employee-select"
-                placeholder="Начните вводить ФИО, email или отдел"
-                autocomplete="off"
-            >
-            <small class="field-hint">Поиск работает прямо по списку выбора ниже.</small>
-        </div>
-
         <form class="form-grid profile-settings-form" method="post">
             {% csrf_token %}
             {% for field in form %}
@@ -102,5 +89,4 @@
         </div>
     </article>
 </section>
-
 {% endblock %}

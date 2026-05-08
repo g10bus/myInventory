@@ -26,85 +26,30 @@
             <input type="hidden" name="action" value="create_transfer">
             <label class="field-group">
                 <span>ТМЦ</span>
-                <div class="search-select" data-enhanced-select>
-                    <select class="search-select-native" id="transfer-asset-select" name="asset_id" required>
-                        <option value="">Выберите позицию</option>
-                        {% for asset in current_assets %}
-                            <option value="{{ asset.id }}" data-title="{{ asset.title }}" data-inventory="{{ asset.inventory_number }}">
-                                {{ asset.title }} • {{ asset.inventory_number }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <div class="search-select-control">
-                        <input
-                            class="search-select-input"
-                            type="text"
-                            data-role="input"
-                            placeholder="Нажмите, чтобы найти ТМЦ"
-                            autocomplete="off"
-                        >
-                        <button class="search-select-filter-button" type="button" data-role="filter-button" aria-label="Открыть фильтр">
-                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                <path d="M4 6h16M7 12h10M10 18h4"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="search-select-dropdown" data-role="dropdown" hidden>
-                        <div class="search-select-options" data-role="list"></div>
-                        <div class="search-select-empty" data-role="empty" hidden>Ничего не найдено.</div>
-                    </div>
-                    <div class="search-select-filters" data-role="filters" hidden>
-                        <span class="search-select-filters-title">Искать по</span>
-                        <div class="search-select-filter-list">
-                            <button class="search-select-filter-chip is-active" type="button" data-field="title">Названию</button>
-                            <button class="search-select-filter-chip is-active" type="button" data-field="inventory">Номеру</button>
-                        </div>
-                    </div>
-                </div>
+                <select class="select-input" name="asset_id" data-search-placeholder="Нажмите, чтобы найти ТМЦ" required>
+                    <option value="">Выберите позицию</option>
+                    {% for asset in current_assets %}
+                        <option value="{{ asset.id }}" data-title="{{ asset.title }}" data-inventory="{{ asset.inventory_number }}">
+                            {{ asset.title }} • {{ asset.inventory_number }}
+                        </option>
+                    {% endfor %}
+                </select>
             </label>
             <label class="field-group">
                 <span>Получатель</span>
-                <div class="search-select" data-enhanced-select>
-                    <select class="search-select-native" id="transfer-recipient-select" name="recipient_id" required>
-                        <option value="">Выберите сотрудника</option>
-                        {% for colleague in colleagues %}
-                            <option
-                                value="{{ colleague.id }}"
-                                data-name="{{ colleague.full_name|default:colleague.email }}"
-                                data-email="{{ colleague.email }}"
-                                data-department="{{ colleague.department.name|default:'Без отдела' }}"
-                            >
-                                {{ colleague.full_name|default:colleague.email }} • {{ colleague.department.name|default:"Без отдела" }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <div class="search-select-control">
-                        <input
-                            class="search-select-input"
-                            type="text"
-                            data-role="input"
-                            placeholder="Нажмите, чтобы найти сотрудника"
-                            autocomplete="off"
+                <select class="select-input" name="recipient_id" data-search-placeholder="Нажмите, чтобы найти сотрудника" required>
+                    <option value="">Выберите сотрудника</option>
+                    {% for colleague in colleagues %}
+                        <option
+                            value="{{ colleague.id }}"
+                            data-name="{{ colleague.full_name|default:colleague.email }}"
+                            data-email="{{ colleague.email }}"
+                            data-department="{{ colleague.department.name|default:'Без отдела' }}"
                         >
-                        <button class="search-select-filter-button" type="button" data-role="filter-button" aria-label="Открыть фильтр">
-                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                <path d="M4 6h16M7 12h10M10 18h4"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="search-select-dropdown" data-role="dropdown" hidden>
-                        <div class="search-select-options" data-role="list"></div>
-                        <div class="search-select-empty" data-role="empty" hidden>Ничего не найдено.</div>
-                    </div>
-                    <div class="search-select-filters" data-role="filters" hidden>
-                        <span class="search-select-filters-title">Искать по</span>
-                        <div class="search-select-filter-list">
-                            <button class="search-select-filter-chip is-active" type="button" data-field="name">ФИО</button>
-                            <button class="search-select-filter-chip is-active" type="button" data-field="email">Email</button>
-                            <button class="search-select-filter-chip is-active" type="button" data-field="department">Отделу</button>
-                        </div>
-                    </div>
-                </div>
+                            {{ colleague.full_name|default:colleague.email }} • {{ colleague.department.name|default:"Без отдела" }}
+                        </option>
+                    {% endfor %}
+                </select>
             </label>
             <label class="field-group field-group-full">
                 <span>Комментарий</span>
