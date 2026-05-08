@@ -25,7 +25,14 @@
 
         <div class="field-group">
             <span>Поиск сотрудника</span>
-            <input class="text-input" type="text" id="employee-search-input" placeholder="Начните вводить ФИО, email или отдел">
+            <input
+                class="text-input select-search-input"
+                type="text"
+                id="employee-search-input"
+                data-select-target="employee-select"
+                placeholder="Начните вводить ФИО, email или отдел"
+                autocomplete="off"
+            >
             <small class="field-hint">Поиск работает прямо по списку выбора ниже.</small>
         </div>
 
@@ -96,29 +103,4 @@
     </article>
 </section>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById("employee-search-input");
-    const select = document.getElementById("employee-select");
-
-    if (!searchInput || !select) {
-        return;
-    }
-
-    const options = Array.from(select.options);
-    searchInput.addEventListener("input", function () {
-        const query = searchInput.value.trim().toLowerCase();
-        options.forEach(function (option) {
-            if (!option.value) {
-                option.hidden = false;
-                return;
-            }
-            option.hidden = query && !option.text.toLowerCase().includes(query);
-            if (option.hidden && option.selected) {
-                select.selectedIndex = 0;
-            }
-        });
-    });
-});
-</script>
 {% endblock %}

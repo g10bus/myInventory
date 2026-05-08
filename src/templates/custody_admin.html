@@ -53,6 +53,23 @@
             {% for field in transfer_form %}
                 <label class="field-group {% if field.name == 'comment' %}field-group-full{% endif %}">
                     <span>{{ field.label }}</span>
+                    {% if field.name == "asset" %}
+                        <input
+                            class="text-input select-search-input"
+                            type="text"
+                            data-select-target="{{ field.id_for_label }}"
+                            placeholder="Поиск по названию или инвентарному номеру"
+                            autocomplete="off"
+                        >
+                    {% elif field.name == "recipient" %}
+                        <input
+                            class="text-input select-search-input"
+                            type="text"
+                            data-select-target="{{ field.id_for_label }}"
+                            placeholder="Поиск по ФИО, email или отделу"
+                            autocomplete="off"
+                        >
+                    {% endif %}
                     {{ field }}
                     {% for error in field.errors %}
                         <span class="field-error">{{ error }}</span>
