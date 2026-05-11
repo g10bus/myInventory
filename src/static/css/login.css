@@ -38,19 +38,24 @@ body {
 }
 
 .auth-brand {
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    display: grid;
+    gap: 10px;
     margin-bottom: 20px;
 }
 
-.auth-brand img {
+.auth-brand-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.auth-brand-head img {
     width: 56px;
     height: 56px;
 }
 
 .auth-brand h1 {
-    margin: 0 0 8px;
+    margin: 0;
     font-size: 1.45rem;
 }
 
@@ -134,7 +139,7 @@ body {
         padding: 20px;
     }
 
-    .auth-brand {
+    .auth-brand-head {
         align-items: flex-start;
         flex-direction: column;
     }

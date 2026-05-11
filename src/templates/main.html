@@ -38,7 +38,7 @@
         </div>
         <div class="list-stack">
             {% for assignment in active_inventory_assignments %}
-                <div class="list-item">
+                <div class="list-item inventory-assignment-active-card">
                     <div>
                         <strong>Инвентаризация активна</strong>
                         <p>
@@ -47,7 +47,6 @@
                         </p>
                     </div>
                     <div class="list-item-meta">
-                        <span class="status-badge status-in_use">Можно проводить</span>
                         <a class="ghost-link" href="{% url 'mytmc' %}">Открыть мои ТМЦ</a>
                     </div>
                 </div>
