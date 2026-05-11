@@ -68,16 +68,42 @@
                             • {{ assignment.employee.department.name|default:"Без отдела" }}
                             {% if assignment.note %}• {{ assignment.note }}{% endif %}
                         </p>
+                        <p class="table-muted">
+                            Фотофиксации: {{ assignment.verified_assets_total }} из {{ assignment.assigned_assets_total }}
+                            {% if assignment.is_revoked and assignment.revoked_at %}
+                                • Отозвано {{ assignment.revoked_at|date:"d.m.Y H:i" }}
+                            {% endif %}
+                        </p>
                     </div>
                     <div class="list-item-meta">
-                        {% if assignment.is_active %}
+                        {% if assignment.is_revoked %}
+                            <span class="status-badge status-broken">Отозвано</span>
+                        {% elif assignment.is_active %}
                             <span class="status-badge status-in_use">Активно</span>
                         {% elif assignment.is_upcoming %}
                             <span class="status-badge status-reserve">Ожидает</span>
                         {% else %}
                             <span class="status-badge status-broken">Завершено</span>
                         {% endif %}
+
+                        {% if assignment.has_completed_photo_fixations %}
+                            <span class="status-badge status-completed">Все фотофиксации сделаны</span>
+                        {% elif assignment.assigned_assets_total %}
+                            <span class="status-badge status-reserve">{{ assignment.verified_assets_total }}/{{ assignment.assigned_assets_total }}</span>
+                        {% else %}
+                            <span class="status-badge status-reserve">Нет ТМЦ</span>
+                        {% endif %}
+
                         <span>{% if assignment.assigned_by %}{{ assignment.assigned_by.short_name }}{% else %}Система{% endif %}</span>
+
+                        {% if not assignment.is_revoked %}
+                            {% if assignment.is_active or assignment.is_upcoming %}
+                                <form method="post" action="{% url 'inventory-assignment-revoke' assignment.id %}">
+                                    {% csrf_token %}
+                                    <button class="secondary-button" type="submit">Отозвать</button>
+                                </form>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 </div>
             {% empty %}

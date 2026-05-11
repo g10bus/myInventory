@@ -1,9 +1,11 @@
+from collections import defaultdict
+
 from django.db.models import Prefetch, Q
 from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.custody.models import AssetAssignment
-from apps.inventory.models import Asset, EmployeeInventoryAssignment
+from apps.inventory.models import Asset, EmployeeInventoryAssignment, InventoryVerification
 
 
 def get_asset_category_choices(queryset):
@@ -121,9 +123,46 @@ def get_employee_inventory_assignments(*, employee_query=""):
     return assignments
 
 
+def get_employee_inventory_assignment_history(*, employee_query=""):
+    assignments = list(get_employee_inventory_assignments(employee_query=employee_query))
+    if not assignments:
+        return assignments
+
+    employee_ids = {assignment.employee_id for assignment in assignments}
+    asset_ids_by_employee = defaultdict(set)
+    for employee_id, asset_id in AssetAssignment.objects.filter(
+        employee_id__in=employee_ids,
+        is_current=True,
+    ).values_list("employee_id", "asset_id"):
+        asset_ids_by_employee[employee_id].add(asset_id)
+
+    verifications_by_employee = defaultdict(list)
+    for employee_id, asset_id, verified_date in InventoryVerification.objects.filter(
+        responsible_employee_id__in=employee_ids,
+    ).values_list("responsible_employee_id", "asset_id", "verified_at__date"):
+        verifications_by_employee[employee_id].append((asset_id, verified_date))
+
+    for assignment in assignments:
+        assigned_asset_ids = asset_ids_by_employee.get(assignment.employee_id, set())
+        verified_asset_ids = {
+            asset_id
+            for asset_id, verified_date in verifications_by_employee.get(assignment.employee_id, [])
+            if assignment.date_from <= verified_date <= assignment.date_to and asset_id in assigned_asset_ids
+        }
+        assignment.assigned_assets_total = len(assigned_asset_ids)
+        assignment.verified_assets_total = len(verified_asset_ids)
+        assignment.has_completed_photo_fixations = (
+            not assignment.is_revoked
+            and assignment.assigned_assets_total > 0
+            and assignment.verified_assets_total >= assignment.assigned_assets_total
+        )
+
+    return assignments
+
+
 def get_user_inventory_assignments(user):
     return (
-        EmployeeInventoryAssignment.objects.filter(employee=user)
+        EmployeeInventoryAssignment.objects.filter(employee=user, revoked_at__isnull=True)
         .select_related("assigned_by")
         .order_by("date_from", "date_to", "-created_at")
     )
@@ -134,6 +173,7 @@ def get_active_inventory_assignment(user, on_date=None):
     return (
         EmployeeInventoryAssignment.objects.filter(
             employee=user,
+            revoked_at__isnull=True,
             date_from__lte=target_date,
             date_to__gte=target_date,
         )

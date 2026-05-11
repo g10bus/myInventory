@@ -5,6 +5,7 @@ from .views.web import (
     asset_create_view,
     asset_edit_view,
     inventory_assignment_admin_view,
+    inventory_assignment_revoke_view,
     my_asset_detail_view,
     my_assets_view,
 )
@@ -16,5 +17,10 @@ urlpatterns = [
     path("assets/manage/", asset_admin_view, name="asset-admin"),
     path("assets/manage/create/", asset_create_view, name="asset-create"),
     path("assets/manage/assignments/", inventory_assignment_admin_view, name="inventory-assignment-admin"),
+    path(
+        "assets/manage/assignments/<int:assignment_id>/revoke/",
+        inventory_assignment_revoke_view,
+        name="inventory-assignment-revoke",
+    ),
     path("assets/manage/<int:asset_id>/", asset_edit_view, name="asset-edit"),
 ]

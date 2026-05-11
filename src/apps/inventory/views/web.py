@@ -3,6 +3,7 @@ from datetime import date
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -13,11 +14,12 @@ from apps.inventory.forms import (
     EmployeeInventoryAssignmentForm,
     InventoryVerificationCreateForm,
 )
-from apps.inventory.models import Asset
+from apps.inventory.models import Asset, InventoryVerification
 from apps.inventory.services import (
     create_asset,
     create_employee_inventory_assignment,
     record_verification,
+    revoke_employee_inventory_assignment,
     update_asset_details,
 )
 
@@ -27,6 +29,7 @@ from ..selectors import (
     get_asset_category_choices,
     get_asset_employee_choices,
     get_asset_location_choices,
+    get_employee_inventory_assignment_history,
     get_employee_inventory_assignment_choices,
     get_employee_inventory_assignments,
     get_user_assets,
@@ -194,9 +197,12 @@ def resolve_inventory_window(user):
 
     if not has_assignments:
         return {
-            "verification_allowed": True,
+            "verification_allowed": False,
             "active_inventory_assignment": None,
-            "verification_lock_message": "",
+            "verification_lock_message": (
+                "Инвентаризация пока не назначена администратором. "
+                "Проведение сверки откроется только в утвержденный период."
+            ),
             "upcoming_inventory_assignment": None,
         }
 
@@ -232,12 +238,34 @@ def resolve_inventory_window(user):
     }
 
 
+def annotate_inventory_verification_status(assets, *, user, active_assignment):
+    if not active_assignment:
+        return assets
+
+    verification_subquery = InventoryVerification.objects.filter(
+        asset=OuterRef("pk"),
+        responsible_employee=user,
+        verified_at__date__gte=active_assignment.date_from,
+        verified_at__date__lte=active_assignment.date_to,
+    )
+
+    return assets.annotate(
+        has_inventory_verification_in_period=Exists(verification_subquery),
+    )
+
+
 @login_required
 def my_assets_view(request):
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "").strip()
     category = request.GET.get("category", "").strip()
+    inventory_window = resolve_inventory_window(request.user)
     assets = get_user_assets(request.user, query=query, status=status, category=category)
+    assets = annotate_inventory_verification_status(
+        assets,
+        user=request.user,
+        active_assignment=inventory_window["active_inventory_assignment"],
+    )
     category_choices = get_asset_category_choices(get_user_assets(request.user))
     return render(
         request,
@@ -250,6 +278,7 @@ def my_assets_view(request):
             "selected_category": category,
             "status_choices": Asset.Status.choices,
             "category_choices": category_choices,
+            **inventory_window,
         },
     )
 
@@ -382,9 +411,31 @@ def inventory_assignment_admin_view(request):
             "user_data": request.user,
             "form": form,
             "employee_query": employee_query,
-            "assignment_history": get_employee_inventory_assignments(employee_query=employee_query),
+            "assignment_history": get_employee_inventory_assignment_history(employee_query=employee_query),
         },
     )
+
+
+@login_required
+def inventory_assignment_revoke_view(request, assignment_id):
+    ensure_administrator(request.user)
+    if request.method != "POST":
+        raise PermissionDenied("Р”РѕСЃС‚СѓРї СЂР°Р·СЂРµС€РµРЅ С‚РѕР»СЊРєРѕ РґР»СЏ POST-Р·Р°РїСЂРѕСЃРѕРІ.")
+
+    assignment = get_object_or_404(get_employee_inventory_assignments(), pk=assignment_id)
+    if assignment.revoked_at:
+        messages.info(request, "Назначение уже было отозвано ранее.")
+        return redirect("inventory-assignment-admin")
+
+    revoke_employee_inventory_assignment(assignment=assignment, actor=request.user)
+    messages.success(
+        request,
+        (
+            f"Назначение инвентаризации для {assignment.employee.full_name} "
+            f"за период {assignment.date_from:%d.%m.%Y} - {assignment.date_to:%d.%m.%Y} отозвано."
+        ),
+    )
+    return redirect("inventory-assignment-admin")
 
 
 @login_required

@@ -105,9 +105,18 @@ class EmployeeInventoryAssignment(TimeStampedModel):
         null=True,
         blank=True,
     )
+    revoked_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="inventory_assignments_revoked",
+        null=True,
+        blank=True,
+    )
     date_from = models.DateField()
     date_to = models.DateField()
     note = models.TextField(blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revocation_note = models.TextField(blank=True)
 
     class Meta:
         verbose_name = "Назначение инвентаризации"
@@ -119,13 +128,23 @@ class EmployeeInventoryAssignment(TimeStampedModel):
 
     @property
     def is_active(self):
+        if self.is_revoked:
+            return False
         today = timezone.localdate()
         return self.date_from <= today <= self.date_to
 
     @property
     def is_upcoming(self):
+        if self.is_revoked:
+            return False
         return timezone.localdate() < self.date_from
 
     @property
     def is_expired(self):
+        if self.is_revoked:
+            return False
         return timezone.localdate() > self.date_to
+
+    @property
+    def is_revoked(self):
+        return bool(self.revoked_at)

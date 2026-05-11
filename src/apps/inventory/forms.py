@@ -75,6 +75,7 @@ class InventoryVerificationCreateForm(forms.Form):
             attrs={
                 "class": "file-input",
                 "accept": "image/*",
+                "required": True,
             }
         ),
     )
@@ -88,6 +89,12 @@ class InventoryVerificationCreateForm(forms.Form):
             }
         ),
     )
+
+    def clean_image(self):
+        image = self.cleaned_data.get("image")
+        if not image:
+            raise forms.ValidationError("Прикрепите фотофиксацию перед сохранением.")
+        return image
 
 
 class EmployeeInventoryAssignmentForm(forms.Form):

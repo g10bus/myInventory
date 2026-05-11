@@ -41,6 +41,20 @@
                     <span class="pill">{{ asset.category }}</span>
                     <span class="status-badge status-{{ asset.status }}">{{ asset.get_status_display }}</span>
                 </div>
+                {% if active_inventory_assignment %}
+                    <div class="inventory-progress-chip {% if asset.has_inventory_verification_in_period %}inventory-progress-chip-done{% else %}inventory-progress-chip-missing{% endif %}">
+                        <span class="inventory-progress-icon" aria-hidden="true">
+                            {% if asset.has_inventory_verification_in_period %}&#10003;{% else %}&#10005;{% endif %}
+                        </span>
+                        <span>
+                            {% if asset.has_inventory_verification_in_period %}
+                                Фиксация проведена в период
+                            {% else %}
+                                Фиксация не проведена в период
+                            {% endif %}
+                        </span>
+                    </div>
+                {% endif %}
                 <h3>{{ asset.title }}</h3>
                 <p>{{ asset.model_name|default:"Модель не указана" }}</p>
                 <div class="details-grid">

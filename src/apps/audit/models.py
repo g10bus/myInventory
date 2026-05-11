@@ -16,6 +16,7 @@ class AuditEvent(TimeStampedModel):
         ASSET_VERIFIED = "asset_verified", "Сверка ТМЦ"
         ASSET_WRITTEN_OFF = "asset_written_off", "Списание ТМЦ"
         INVENTORY_ASSIGNMENT_CREATED = "inventory_assignment_created", "Назначена инвентаризация"
+        INVENTORY_ASSIGNMENT_REVOKED = "inventory_assignment_revoked", "Инвентаризация отозвана"
 
     event_type = models.CharField(max_length=50, choices=EventType.choices)
     actor = models.ForeignKey(

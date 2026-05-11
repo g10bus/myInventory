@@ -48,6 +48,33 @@ def create_employee_inventory_assignment(*, employee, actor, date_from, date_to,
     return assignment
 
 
+def revoke_employee_inventory_assignment(*, assignment, actor, note=""):
+    if assignment.revoked_at:
+        return assignment
+
+    assignment.revoked_at = timezone.now()
+    assignment.revoked_by = actor
+    assignment.revocation_note = note
+    assignment.save(update_fields=["revoked_at", "revoked_by", "revocation_note", "updated_at"])
+
+    log_event(
+        event_type="inventory_assignment_revoked",
+        actor=actor,
+        related_user=assignment.employee,
+        message=(
+            f"Инвентаризация для сотрудника '{assignment.employee.full_name}' "
+            f"за период {assignment.date_from:%d.%m.%Y} - {assignment.date_to:%d.%m.%Y} отозвана."
+        ),
+        metadata={
+            "inventory_assignment_id": assignment.id,
+            "date_from": str(assignment.date_from),
+            "date_to": str(assignment.date_to),
+            "note": note,
+        },
+    )
+    return assignment
+
+
 def record_verification(
     *,
     asset,
