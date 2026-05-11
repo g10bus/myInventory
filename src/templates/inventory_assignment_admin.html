@@ -71,13 +71,13 @@
                         <p class="table-muted">
                             Фотофиксации: {{ assignment.verified_assets_total }} из {{ assignment.assigned_assets_total }}
                             {% if assignment.is_revoked and assignment.revoked_at %}
-                                • Отозвано {{ assignment.revoked_at|date:"d.m.Y H:i" }}
+                                • Завершено {{ assignment.revoked_at|date:"d.m.Y H:i" }}
                             {% endif %}
                         </p>
                     </div>
                     <div class="list-item-meta">
                         {% if assignment.is_revoked %}
-                            <span class="status-badge status-broken">Отозвано</span>
+                            <span class="status-badge status-completed">Завершено</span>
                         {% elif assignment.is_active %}
                             <span class="status-badge status-in_use">Активно</span>
                         {% elif assignment.is_upcoming %}
@@ -100,7 +100,7 @@
                             {% if assignment.is_active or assignment.is_upcoming %}
                                 <form method="post" action="{% url 'inventory-assignment-revoke' assignment.id %}">
                                     {% csrf_token %}
-                                    <button class="secondary-button" type="submit">Отозвать</button>
+                                    <button class="secondary-button inventory-action-button" type="submit">Закончить инвентаризацию</button>
                                 </form>
                             {% endif %}
                         {% endif %}

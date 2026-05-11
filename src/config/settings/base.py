@@ -5,7 +5,6 @@ import environ
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 SRC_DIR = BASE_DIR / "src"
-ALLOWED_HOSTS = ['*']
 
 
 env = environ.Env(
@@ -15,13 +14,28 @@ env = environ.Env(
     DJANGO_CSRF_TRUSTED_ORIGINS=(list, []),
 )
 
+
+
+
 environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY", default="unsafe-dev-secret-key-change-me")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 SERVE_MEDIA = env.bool("DJANGO_SERVE_MEDIA", default=DEBUG)
-ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
-CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
+# ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+# CSRF_TRUSTED_ORIGINS = env.list("DJANGO_CSRF_TRUSTED_ORIGINS", default=[])
+
+ALLOWED_HOSTS = env.list(
+    "DJANGO_ALLOWED_HOSTS",
+    default=["localhost", "127.0.0.1"],
+)
+
+CSRF_TRUSTED_ORIGINS = env.list(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    default=[],
+)
+
+
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"
 

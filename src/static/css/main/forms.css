@@ -337,6 +337,17 @@
     color: var(--danger);
 }
 
+.inventory-action-button {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff;
+}
+
+.inventory-action-button:hover {
+    background: var(--brand-dark);
+    border-color: var(--brand-dark);
+}
+
 @media (max-width: 720px) {
     .search-row {
         grid-template-columns: 1fr;

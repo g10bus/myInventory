@@ -7,6 +7,8 @@ services:
     environment:
       DATABASE_URL: postgresql://inventory:inventory@db:5432/inventory
       RUN_MIGRATIONS: "1"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,.ngrok-free.app,*"
+      DJANGO_CSRF_TRUSTED_ORIGINS: "https://*.ngrok-free.app"
       RUN_COLLECTSTATIC: "1"
       DJANGO_SETTINGS_MODULE: config.settings.prod
       DJANGO_SERVE_MEDIA: "1"
