@@ -5,6 +5,8 @@ import environ
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 SRC_DIR = BASE_DIR / "src"
+ALLOWED_HOSTS = ['*']
+
 
 env = environ.Env(
     DJANGO_DEBUG=(bool, False),
