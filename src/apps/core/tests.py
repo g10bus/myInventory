@@ -1,11 +1,13 @@
 from datetime import date, timedelta
 
 from django.contrib.auth.models import Group
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.models import User
+from apps.audit.models import AuditEvent
 from apps.custody.models import TransferRequest
 from apps.custody.services import issue_asset, request_transfer, return_asset
 from apps.inventory.models import Asset, EmployeeInventoryAssignment, InventoryVerification
@@ -146,6 +148,8 @@ class WebUserFlowsTestCase(TestCase):
         self.assertTemplateUsed(response, "tmc.html")
         self.assertContains(response, self.asset.title)
         self.assertContains(response, self.asset.inventory_number)
+        self.assertNotContains(response, "Р¤РѕС‚РѕС„РёРєСЃР°С†РёСЏ РІС‹РїРѕР»РЅРµРЅР°")
+        self.assertNotContains(response, "Р¤РѕС‚РѕС„РёРєСЃР°С†РёСЏ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚")
         self.assertContains(response, self.employee.office_location)
 
     def test_employee_can_open_assigned_asset_details(self):
@@ -378,6 +382,102 @@ class WebPagesTestCase(TestCase):
         self.assertContains(response, self.asset.title)
         self.assertContains(response, self.asset.inventory_number)
 
+    def legacy_test_mytmc_page_shows_missing_photo_status_during_active_inventory(self):
+        today = timezone.localdate()
+        EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today - timedelta(days=1),
+            date_to=today + timedelta(days=2),
+        )
+        record_verification(
+            asset=self.asset,
+            actor=self.employee,
+            note="Сверка выполнена без фотофиксации.",
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("mytmc"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Фотофиксация отсутствует")
+        self.assertNotContains(response, "Фотофиксация выполнена")
+
+    def legacy_test_mytmc_page_shows_done_photo_status_during_active_inventory(self):
+        today = timezone.localdate()
+        EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today - timedelta(days=1),
+            date_to=today + timedelta(days=2),
+        )
+        record_verification(
+            asset=self.asset,
+            actor=self.employee,
+            note="Фотофиксация выполнена в активный период.",
+            image=SimpleUploadedFile(
+                "inventory-proof.jpg",
+                b"fake-image-content",
+                content_type="image/jpeg",
+            ),
+            image_caption="Фото рабочего места",
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("mytmc"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Фотофиксация выполнена")
+        self.assertNotContains(response, "Фотофиксация отсутствует")
+
+    def test_mytmc_page_shows_missing_verification_status_during_active_inventory(self):
+        today = timezone.localdate()
+        EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today - timedelta(days=1),
+            date_to=today + timedelta(days=2),
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("mytmc"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Фиксация не проведена в период")
+        self.assertNotContains(response, "Фиксация проведена в период")
+
+    def test_mytmc_page_shows_done_verification_status_during_active_inventory(self):
+        today = timezone.localdate()
+        EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today - timedelta(days=1),
+            date_to=today + timedelta(days=2),
+        )
+        record_verification(
+            asset=self.asset,
+            actor=self.employee,
+            note="Фиксация выполнена в активный период.",
+            image=SimpleUploadedFile(
+                "inventory-proof.gif",
+                (
+                    b"GIF87a\x01\x00\x01\x00\x80\x00\x00"
+                    b"\x00\x00\x00\xff\xff\xff!\xf9\x04\x01"
+                    b"\x00\x00\x00\x00,\x00\x00\x00\x00\x01"
+                    b"\x00\x01\x00\x00\x02\x02D\x01\x00;"
+                ),
+                content_type="image/gif",
+            ),
+            image_caption="Фото рабочего места",
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("mytmc"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Фиксация проведена в период")
+        self.assertNotContains(response, "Фиксация не проведена в период")
+
     def test_history_page_is_rendered(self):
         self.client.force_login(self.employee)
 
@@ -508,6 +608,62 @@ class WebPagesTestCase(TestCase):
         self.assertEqual(assignment.assigned_by, self.admin)
         self.assertEqual(assignment.note, "Нужно подтвердить наличие всех закрепленных ТМЦ.")
 
+    def test_inventory_assignment_admin_shows_completion_status_when_all_assets_verified(self):
+        today = timezone.localdate()
+        EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today - timedelta(days=1),
+            date_to=today + timedelta(days=2),
+        )
+        record_verification(
+            asset=self.asset,
+            actor=self.employee,
+            note="Фиксация выполнена полностью.",
+            image=SimpleUploadedFile(
+                "assignment-proof.gif",
+                (
+                    b"GIF87a\x01\x00\x01\x00\x80\x00\x00"
+                    b"\x00\x00\x00\xff\xff\xff!\xf9\x04\x01"
+                    b"\x00\x00\x00\x00,\x00\x00\x00\x00\x01"
+                    b"\x00\x01\x00\x00\x02\x02D\x01\x00;"
+                ),
+                content_type="image/gif",
+            ),
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("inventory-assignment-admin"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Все фотофиксации сделаны")
+        self.assertContains(response, "Фотофиксации: 1 из 1")
+
+    def test_admin_can_revoke_inventory_assignment(self):
+        today = timezone.localdate()
+        assignment = EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today,
+            date_to=today + timedelta(days=3),
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("inventory-assignment-revoke", kwargs={"assignment_id": assignment.id}),
+        )
+
+        self.assertRedirects(response, reverse("inventory-assignment-admin"))
+        assignment.refresh_from_db()
+        self.assertEqual(assignment.revoked_by, self.admin)
+        self.assertIsNotNone(assignment.revoked_at)
+        self.assertTrue(
+            AuditEvent.objects.filter(
+                event_type="inventory_assignment_revoked",
+                related_user=self.employee,
+            ).exists()
+        )
+
     def test_employee_sees_inventory_assignment_on_dashboard(self):
         today = timezone.localdate()
         EmployeeInventoryAssignment.objects.create(
@@ -561,7 +717,7 @@ class WebPagesTestCase(TestCase):
         )
         self.assertEqual(InventoryVerification.objects.filter(asset=self.asset).count(), 0)
 
-    def test_employee_can_submit_verification_during_inventory_period(self):
+    def legacy_test_employee_can_submit_verification_during_inventory_period(self):
         today = timezone.localdate()
         EmployeeInventoryAssignment.objects.create(
             employee=self.employee,
@@ -585,6 +741,64 @@ class WebPagesTestCase(TestCase):
             reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
         )
         self.assertEqual(InventoryVerification.objects.filter(asset=self.asset).count(), 1)
+
+    def test_employee_can_submit_verification_during_inventory_period(self):
+        today = timezone.localdate()
+        EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today - timedelta(days=1),
+            date_to=today + timedelta(days=2),
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.post(
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+            {
+                "location": self.employee.office_location,
+                "note": "Фиксация проведена в активный период.",
+                "image": SimpleUploadedFile(
+                    "verification.gif",
+                    (
+                        b"GIF87a\x01\x00\x01\x00\x80\x00\x00"
+                        b"\x00\x00\x00\xff\xff\xff!\xf9\x04\x01"
+                        b"\x00\x00\x00\x00,\x00\x00\x00\x00\x01"
+                        b"\x00\x01\x00\x00\x02\x02D\x01\x00;"
+                    ),
+                    content_type="image/gif",
+                ),
+                "image_caption": "",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+        )
+        self.assertEqual(InventoryVerification.objects.filter(asset=self.asset).count(), 1)
+
+    def test_employee_cannot_submit_verification_without_photo_during_inventory_period(self):
+        today = timezone.localdate()
+        EmployeeInventoryAssignment.objects.create(
+            employee=self.employee,
+            assigned_by=self.admin,
+            date_from=today - timedelta(days=1),
+            date_to=today + timedelta(days=2),
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.post(
+            reverse("mytmc-detail", kwargs={"inventory_number": self.asset.inventory_number}),
+            {
+                "location": self.employee.office_location,
+                "note": "РџС‹С‚Р°СЋСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ С„РёРєСЃР°С†РёСЋ Р±РµР· С„РѕС‚Рѕ.",
+                "image_caption": "",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Прикрепите фотофиксацию перед сохранением.")
+        self.assertEqual(InventoryVerification.objects.filter(asset=self.asset).count(), 0)
 
     def test_user_admin_filters_by_status_and_admin_access(self):
         admin_group = Group.objects.create(name="system_admin")
