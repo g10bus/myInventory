@@ -5,6 +5,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from apps.custody.forms import AdminTransferRequestForm, AssetIssueForm, AssetReturnForm, TransferRequestForm
 from apps.custody.models import TransferRequest
+from apps.custody.reports import (
+    build_history_report_response,
+    build_transfer_report_response,
+    get_transfer_for_report,
+)
 from apps.custody.selectors import get_custody_admin_context, get_transfer_context, get_user_history
 from apps.custody.services import (
     CustodyError,
@@ -32,6 +37,17 @@ def history_view(request):
             "activity_feed": get_user_history(request.user),
         },
     )
+
+
+@login_required
+def history_pdf_view(request):
+    return build_history_report_response(user=request.user)
+
+
+@login_required
+def transfer_report_pdf_view(request, transfer_id):
+    transfer = get_transfer_for_report(actor=request.user, transfer_id=transfer_id)
+    return build_transfer_report_response(transfer=transfer)
 
 
 @login_required

@@ -270,6 +270,46 @@ class WebUserFlowsTestCase(TestCase):
         self.assertContains(response, "возвращено из закрепления сотрудника")
 
 
+    def test_history_pdf_report_is_available(self):
+        issue_asset(
+            asset=self.asset,
+            employee=self.employee,
+            actor=self.admin,
+            note="Р’С‹РґР°РЅРѕ СЃРѕС‚СЂСѓРґРЅРёРєСѓ РґР»СЏ PDF-РѕС‚С‡РµС‚Р°.",
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("history-pdf"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("history-report", response["Content-Disposition"])
+        self.assertTrue(response.content.startswith(b"%PDF"))
+
+    def test_transfer_pdf_report_is_available_for_participant(self):
+        issue_asset(
+            asset=self.asset,
+            employee=self.employee,
+            actor=self.admin,
+            note="РџРµСЂРІРёС‡РЅР°СЏ РІС‹РґР°С‡Р° РґР»СЏ PDF-РѕС‚С‡РµС‚Р°.",
+        )
+        transfer = request_transfer(
+            asset=self.asset,
+            from_employee=self.employee,
+            to_employee=self.recipient,
+            actor=self.employee,
+            comment="РџРµСЂРµРґР°С‡Р° РґР»СЏ PDF-РѕС‚С‡РµС‚Р°.",
+        )
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("transfer-report-pdf", kwargs={"transfer_id": transfer.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn("transfer-report", response["Content-Disposition"])
+        self.assertTrue(response.content.startswith(b"%PDF"))
+
+
 class WebPagesTestCase(TestCase):
     def setUp(self):
         self.department = Department.objects.create(

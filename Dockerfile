@@ -10,6 +10,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    fonts-dejavu-core \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 

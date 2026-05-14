@@ -75,6 +75,9 @@
                     </div>
                     <p>{{ transfer.comment|default:"Комментарий не указан." }}</p>
                     <span class="muted-text">{{ transfer.requested_at|date:"d.m.Y H:i" }}</span>
+                    <div class="list-item-meta">
+                        <a class="ghost-link" href="{% url 'transfer-report-pdf' transfer.id %}">PDF-отчет</a>
+                    </div>
                     {% if transfer.status == "pending" %}
                         <div class="actions-row">
                             <form method="post">
@@ -120,6 +123,7 @@
                 <div class="list-item-meta">
                     <span>{{ transfer.requested_at|date:"d.m.Y H:i" }}</span>
                     <span class="status-badge status-{{ transfer.status }}">{{ transfer.get_status_display }}</span>
+                    <a class="ghost-link" href="{% url 'transfer-report-pdf' transfer.id %}">PDF-отчет</a>
                 </div>
             </div>
         {% empty %}
