@@ -218,6 +218,14 @@
     gap: 14px;
 }
 
+.inventory-assignment-active-card {
+    border-color: rgba(47, 128, 237, 0.16);
+    background:
+        linear-gradient(135deg, rgba(244, 250, 255, 0.98), rgba(233, 245, 255, 0.98)),
+        #fff;
+    box-shadow: 0 10px 26px rgba(47, 128, 237, 0.08);
+}
+
 .list-item-meta {
     display: flex;
     align-items: center;

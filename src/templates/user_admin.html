@@ -5,12 +5,14 @@
 {% block content %}
 <section class="hero-card hero-card-compact">
     <div>
-        <p class="eyebrow">Панель администратора</p>
         <h1>Сотрудники и их данные</h1>
         <p class="hero-copy">
             Здесь администратор может найти любого пользователя, посмотреть его профиль, отдел,
             количество закреплённых ТМЦ и перейти к редактированию данных сотрудника.
         </p>
+        <div class="list-item-meta">
+            <a class="ghost-link" href="{% url 'org-admin' %}">Отделы и локации</a>
+        </div>
     </div>
 </section>
 
@@ -48,7 +50,6 @@
 <section class="panel">
     <div class="panel-header">
         <div>
-            <p class="eyebrow">Реестр</p>
             <h2>Список сотрудников</h2>
         </div>
         <span class="pill">{{ users|length }} чел.</span>

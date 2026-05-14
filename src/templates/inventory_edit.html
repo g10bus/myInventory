@@ -5,7 +5,6 @@
 {% block content %}
 <section class="hero-card">
     <div>
-        <p class="eyebrow">Управление карточкой</p>
         <h1>{% if create_mode %}Новая карточка ТМЦ{% else %}{{ asset.title }}{% endif %}</h1>
         <p class="hero-copy">
             Обновите статус, локацию, даты сверки и другие атрибуты карточки оборудования.
@@ -30,7 +29,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Редактирование</p>
                 <h2>Параметры ТМЦ</h2>
             </div>
             <a class="ghost-link" href="{% url 'asset-admin' %}">К списку</a>
@@ -56,7 +54,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Контекст</p>
                 <h2>Текущее состояние</h2>
             </div>
         </div>

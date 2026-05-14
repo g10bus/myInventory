@@ -5,7 +5,6 @@
 {% block content %}
 <section class="hero-card hero-card-compact">
     <div>
-        <p class="eyebrow">Контур движения ТМЦ</p>
         <h1>Выдача, возврат и передача оборудования</h1>
         <p class="hero-copy">
             Администратор может закреплять ТМЦ за сотрудниками, оформлять передачи, подтверждать или отклонять заявки и принимать оборудование обратно в резерв.
@@ -17,7 +16,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Выдача</p>
                 <h2>Закрепить ТМЦ за сотрудником</h2>
             </div>
         </div>
@@ -43,7 +41,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Передача</p>
                 <h2>Оформить передачу между сотрудниками</h2>
             </div>
         </div>
@@ -71,7 +68,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Возврат</p>
                 <h2>Принять ТМЦ обратно</h2>
             </div>
         </div>
@@ -97,7 +93,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Сводка</p>
                 <h2>Текущее состояние контура</h2>
             </div>
         </div>
@@ -125,7 +120,6 @@
 <section class="panel">
     <div class="panel-header">
         <div>
-            <p class="eyebrow">Активные закрепления</p>
             <h2>Кто сейчас отвечает за оборудование</h2>
         </div>
         <span class="pill">{{ current_assignments|length }}</span>
@@ -157,7 +151,6 @@
 <section class="panel">
     <div class="panel-header">
         <div>
-            <p class="eyebrow">Заявки на передачу</p>
             <h2>Подтверждение и отклонение</h2>
         </div>
     </div>
@@ -176,6 +169,9 @@
                 </div>
                 <p>{{ transfer.comment|default:"Комментарий не указан." }}</p>
                 <span class="muted-text">{{ transfer.requested_at|date:"d.m.Y H:i" }}</span>
+                <div class="list-item-meta">
+                    <a class="ghost-link" href="{% url 'transfer-report-pdf' transfer.id %}">PDF-отчет</a>
+                </div>
                 <div class="actions-row">
                     <form method="post">
                         {% csrf_token %}
@@ -205,7 +201,6 @@
 <section class="panel">
     <div class="panel-header">
         <div>
-            <p class="eyebrow">История передач</p>
             <h2>Последние оформленные операции</h2>
         </div>
     </div>
@@ -219,6 +214,7 @@
                 <div class="list-item-meta">
                     <span>{{ transfer.processed_at|default:transfer.requested_at|date:"d.m.Y H:i" }}</span>
                     <span class="status-badge status-{{ transfer.status }}">{{ transfer.get_status_display }}</span>
+                    <a class="ghost-link" href="{% url 'transfer-report-pdf' transfer.id %}">PDF-отчет</a>
                 </div>
             </div>
         {% empty %}

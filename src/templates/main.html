@@ -5,11 +5,10 @@
 {% block content %}
 <section class="hero-card">
     <div>
-        <p class="eyebrow">Панель сотрудника</p>
-        <h1>Инвентаризация закрепленных материальных ценностей</h1>
+        <h1>Общая информация</h1>
         <p class="hero-copy">
-            Контролируйте, какое оборудование закреплено за сотрудником, что требует сверки,
-            а какие передачи сейчас находятся в работе.
+            Просматривайте текущее состояние закрепленного имущества, актуальные задачи по инвентаризации
+            и активные передачи в одном месте.
         </p>
     </div>
     <div class="hero-side-note">
@@ -33,14 +32,13 @@
     <section class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Уведомления</p>
                 <h2>Назначенные инвентаризации</h2>
             </div>
             <span class="pill">{{ inventory_assignment_count }}</span>
         </div>
         <div class="list-stack">
             {% for assignment in active_inventory_assignments %}
-                <div class="list-item">
+                <div class="list-item inventory-assignment-active-card">
                     <div>
                         <strong>Инвентаризация активна</strong>
                         <p>
@@ -49,7 +47,6 @@
                         </p>
                     </div>
                     <div class="list-item-meta">
-                        <span class="status-badge status-in_use">Можно проводить</span>
                         <a class="ghost-link" href="{% url 'mytmc' %}">Открыть мои ТМЦ</a>
                     </div>
                 </div>
@@ -87,7 +84,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Сверка</p>
                 <h2>Ближайшие контрольные даты</h2>
             </div>
         </div>
@@ -115,7 +111,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Передачи</p>
                 <h2>Последние изменения</h2>
             </div>
         </div>
@@ -144,7 +139,6 @@
 <section class="panel">
     <div class="panel-header">
         <div>
-            <p class="eyebrow">Подборка</p>
             <h2>ТМЦ, закрепленные за сотрудником</h2>
         </div>
         <a class="ghost-link" href="{% url 'mytmc' %}">Открыть полный список</a>

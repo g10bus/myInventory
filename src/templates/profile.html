@@ -5,7 +5,6 @@
 {% block content %}
 <section class="hero-card hero-card-compact">
     <div>
-        <p class="eyebrow">Настройки профиля</p>
         <h1>{{ user_data.full_name|default:user_data.email }}</h1>
         <p class="hero-copy">
             Здесь можно обновить почту, сменить пароль и загрузить новый аватар без выхода из системы.
@@ -45,7 +44,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Контактные данные</p>
                 <h2>Почта и аватар</h2>
             </div>
         </div>
@@ -81,7 +79,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Безопасность</p>
                 <h2>Смена пароля</h2>
             </div>
         </div>
@@ -109,7 +106,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Паспорт сотрудника</p>
                 <h2>Текущие данные</h2>
             </div>
         </div>
@@ -136,7 +132,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Закреплено сейчас</p>
                 <h2>Активные ТМЦ</h2>
             </div>
             <span class="pill">{{ current_assignments|length }}</span>

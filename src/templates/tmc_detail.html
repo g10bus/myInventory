@@ -6,7 +6,6 @@
 {% block content %}
 <section class="hero-card">
     <div>
-        <p class="eyebrow">Карточка ТМЦ</p>
         <h1>{{ asset.title }}</h1>
         <p class="hero-copy">
             Здесь отображаются подробные данные о закрепленном за сотрудником предмете:
@@ -30,7 +29,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Параметры</p>
                 <h2>Основные данные</h2>
             </div>
             <a class="ghost-link" href="{% url 'mytmc' %}">К списку ТМЦ</a>
@@ -76,7 +74,6 @@
     <article class="panel">
         <div class="panel-header">
             <div>
-                <p class="eyebrow">Закрепление</p>
                 <h2>Текущее состояние</h2>
             </div>
         </div>
@@ -104,7 +101,6 @@
 <section class="panel">
     <div class="panel-header">
         <div>
-            <p class="eyebrow">Окно проведения</p>
             <h2>Доступ к инвентаризации</h2>
         </div>
     </div>
@@ -140,7 +136,6 @@
 <section class="panel">
     <div class="panel-header">
         <div>
-            <p class="eyebrow">Провести инвентаризацию</p>
             <h2>Фотофиксация и данные сверки</h2>
         </div>
         <span class="pill">Запись сохранится в историю</span>
@@ -179,7 +174,6 @@
 <section class="panel">
     <div class="panel-header">
         <div>
-            <p class="eyebrow">Фиксации последних инвентаризаций</p>
             <h2>Записи инвентаризации по карточке</h2>
         </div>
         <span class="pill">{{ verification_records|length }} шт.</span>
@@ -199,7 +193,6 @@
                     <div class="verification-card-body">
                         <div class="verification-card-head">
                             <div>
-                                <p class="eyebrow">Фиксация {{ forloop.counter }}</p>
                                 <h3>{{ record.occurred_at|date:"d.m.Y" }}</h3>
                                 {% if record.images_count %}
                                     <p class="table-muted">Фотографий в записи: {{ record.images_count }}</p>

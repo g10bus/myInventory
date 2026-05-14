@@ -90,6 +90,15 @@
                 </svg>
                 <span class="sidebar-brand-label">Инвентаризация</span>
             </a>
+            <a class="sidebar-link {% if request.resolver_match.url_name == 'org-admin' %}sidebar-link-active{% endif %}" href="{% url 'org-admin' %}" aria-label="Отделы и локации" title="Отделы и локации">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M4 7h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M4 12h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    <circle cx="17" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+                <span class="sidebar-brand-label">Отделы и локации</span>
+            </a>
         {% endif %}
     </nav>
 

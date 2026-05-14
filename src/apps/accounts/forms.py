@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
 from django.contrib.auth.models import Group
 
+from apps.org.models import Location
+
 from .models import User
 
 
@@ -201,6 +203,20 @@ class UserAdminManageForm(forms.ModelForm):
         self.fields["avatar"].required = False
         self.fields["blocked_user"].initial = not self.instance.is_active
         self.fields["administrator_access"].initial = self.instance.is_administrator
+        self.fields["department"].queryset = self.fields["department"].queryset.order_by("name")
+
+        location_choices = [("", "Не указана")]
+        location_choices.extend([(location.name, location.name) for location in Location.objects.order_by("name")])
+        current_location = (self.instance.office_location or "").strip()
+        if current_location and current_location not in {value for value, _ in location_choices}:
+            location_choices.append((current_location, current_location))
+        self.fields["office_location"] = forms.ChoiceField(
+            required=False,
+            label="Локация",
+            choices=location_choices,
+            widget=forms.Select(attrs={"class": "select-input"}),
+        )
+        self.initial["office_location"] = current_location
 
         if not actor or not actor.is_superuser:
             self.fields.pop("is_staff", None)

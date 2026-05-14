@@ -1,6 +1,6 @@
 :root {
-    --auth-bg: #f5fbff;
-    --auth-panel: rgba(255, 255, 255, 0.95);
+    --auth-bg: #ffffff;
+    --auth-panel: #ffffff;
     --auth-line: rgba(41, 108, 181, 0.14);
     --auth-text: #16344f;
     --auth-muted: #6b86a1;
@@ -18,10 +18,7 @@ body {
     min-height: 100vh;
     font-family: "Manrope", sans-serif;
     color: var(--auth-text);
-    background:
-        radial-gradient(circle at top right, rgba(90, 174, 255, 0.18), transparent 28%),
-        radial-gradient(circle at bottom left, rgba(47, 128, 237, 0.1), transparent 24%),
-        linear-gradient(180deg, #ffffff 0%, var(--auth-bg) 100%);
+    background: #fff;
 }
 
 .auth-shell {
@@ -41,19 +38,24 @@ body {
 }
 
 .auth-brand {
-    display: flex;
-    align-items: center;
-    gap: 14px;
+    display: grid;
+    gap: 10px;
     margin-bottom: 20px;
 }
 
-.auth-brand img {
+.auth-brand-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.auth-brand-head img {
     width: 56px;
     height: 56px;
 }
 
 .auth-brand h1 {
-    margin: 0 0 8px;
+    margin: 0;
     font-size: 1.5rem;
 }
 
@@ -137,7 +139,7 @@ body {
         padding: 20px;
     }
 
-    .auth-brand {
+    .auth-brand-head {
         align-items: flex-start;
         flex-direction: column;
     }
