@@ -35,6 +35,7 @@ def get_manageable_users(
             | Q(phone__icontains=query)
             | Q(role__icontains=query)
             | Q(position__icontains=query)
+            | Q(office_location__icontains=query)
             | Q(department__name__icontains=query)
         )
     if department:

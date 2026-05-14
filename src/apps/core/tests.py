@@ -12,7 +12,7 @@ from apps.custody.models import TransferRequest
 from apps.custody.services import issue_asset, request_transfer, return_asset
 from apps.inventory.models import Asset, EmployeeInventoryAssignment, InventoryVerification
 from apps.inventory.services import record_verification
-from apps.org.models import Department
+from apps.org.models import Department, Location
 
 
 class WebUserFlowsTestCase(TestCase):
@@ -989,6 +989,64 @@ class WebPagesTestCase(TestCase):
         self.employee.refresh_from_db()
         self.assertTrue(self.employee.is_administrator)
         self.assertTrue(self.employee.groups.filter(name="system_admin").exists())
+
+    def test_admin_can_create_location_and_department_in_org_directory(self):
+        self.client.force_login(self.admin)
+
+        location_response = self.client.post(
+            reverse("org-admin"),
+            {
+                "action": "create_location",
+                "location-name": "Склад 2",
+                "location-code": "WH-2",
+                "location-address": "Основной склад, секция Б",
+            },
+        )
+
+        self.assertRedirects(location_response, reverse("org-admin"))
+        location = Location.objects.get(name="Склад 2")
+        self.assertEqual(location.code, "WH-2")
+
+        department_response = self.client.post(
+            reverse("org-admin"),
+            {
+                "action": "create_department",
+                "department-name": "Сервисный отдел",
+                "department-code": "SRV",
+                "department-location_name": str(location.pk),
+            },
+        )
+
+        self.assertRedirects(department_response, reverse("org-admin"))
+        department = Department.objects.get(name="Сервисный отдел")
+        self.assertEqual(department.code, "SRV")
+        self.assertEqual(department.location, location.name)
+
+    def test_admin_can_assign_department_and_location_to_employee(self):
+        department = Department.objects.create(name="Отдел поддержки", code="SUP")
+        location = Location.objects.create(name="Кабинет 410", code="RM-410")
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            reverse("user-edit", kwargs={"user_id": self.employee.pk}),
+            self._build_user_admin_payload(
+                self.employee,
+                department=str(department.pk),
+                office_location=location.name,
+            ),
+        )
+
+        self.assertRedirects(response, reverse("user-admin"))
+        self.employee.refresh_from_db()
+        self.assertEqual(self.employee.department, department)
+        self.assertEqual(self.employee.office_location, location.name)
+
+    def test_regular_user_cannot_open_org_admin_page(self):
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("org-admin"))
+
+        self.assertEqual(response.status_code, 403)
 
     def test_admin_can_revoke_admin_access_from_other_user(self):
         admin_group = Group.objects.create(name="system_admin")

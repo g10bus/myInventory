@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Отделы и локации{% endblock %}
+
+{% block content %}
+<section class="hero-card hero-card-compact">
+    <div>
+        <h1>Отделы и локации</h1>
+        <p class="hero-copy">
+            Здесь администратор может вести справочники отделов и локаций, а затем назначать их сотрудникам
+            через карточку редактирования пользователя.
+        </p>
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Создать локацию</h2>
+            </div>
+        </div>
+        <form class="form-grid" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_location">
+            {% for field in location_form %}
+                <label class="field-group {% if field.name == 'address' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in location_form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <button class="primary-button" type="submit">Создать локацию</button>
+        </form>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Создать отдел</h2>
+            </div>
+        </div>
+        <form class="form-grid" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_department">
+            {% for field in department_form %}
+                <label class="field-group">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in department_form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+            <button class="primary-button" type="submit">Создать отдел</button>
+        </form>
+    </article>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Список локаций</h2>
+            </div>
+            <span class="pill">{{ locations|length }}</span>
+        </div>
+        <div class="list-stack">
+            {% for location in locations %}
+                <div class="list-item">
+                    <div>
+                        <strong>{{ location.name }}</strong>
+                        <p>{{ location.code|default:"Без кода" }} • {{ location.address|default:"Описание не указано" }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>Локаций пока нет</h3>
+                    <p>Создайте первую локацию, чтобы назначать ее сотрудникам и использовать в отделах.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Список отделов</h2>
+            </div>
+            <span class="pill">{{ departments|length }}</span>
+        </div>
+        <div class="list-stack">
+            {% for department in departments %}
+                <div class="list-item">
+                    <div>
+                        <strong>{{ department.name }}</strong>
+                        <p>{{ department.code|default:"Без кода" }} • {{ department.location|default:"Локация не указана" }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>Отделов пока нет</h3>
+                    <p>Создайте первый отдел, чтобы привязывать к нему сотрудников.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}
