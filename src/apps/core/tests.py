@@ -173,7 +173,7 @@ class WebUserFlowsTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "main.html")
-        self.assertContains(response, "Инвентаризация закрепленных материальных ценностей")
+        self.assertContains(response, "Общая информация")
         self.assertContains(response, self.employee.full_name)
 
     def test_employee_can_get_list_of_assigned_assets(self):
@@ -237,7 +237,7 @@ class WebUserFlowsTestCase(TestCase):
         self.assertEqual(InventoryVerification.objects.filter(asset=self.asset).count(), 1)
         self.assertEqual(verification.responsible_employee, self.employee)
         self.assertEqual(verification.location, self.employee.office_location)
-        self.assertContains(response, "Фиксации последних инвентаризаций")
+        self.assertContains(response, "Записи инвентаризации по карточке")
         self.assertContains(response, "Проверен комплект, маркировка и фактическая локация ТМЦ.")
         self.assertContains(response, self.admin.full_name)
         self.assertContains(response, self.employee.full_name)
@@ -410,7 +410,7 @@ class WebPagesTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "main.html")
-        self.assertContains(response, "Инвентаризация закрепленных материальных ценностей")
+        self.assertContains(response, "Общая информация")
         self.assertContains(response, self.asset.title)
         self.assertContains(response, "Закреплено за мной")
 
@@ -567,7 +567,7 @@ class WebPagesTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "profile.html")
-        self.assertContains(response, "Настройки профиля")
+        self.assertContains(response, "Почта и аватар")
         self.assertContains(response, self.employee.email)
         self.assertContains(response, self.asset.title)
 
@@ -969,7 +969,7 @@ class WebPagesTestCase(TestCase):
 
         admin_response = self.client.get(reverse("profile"))
         self.assertContains(admin_response, reverse("asset-admin"))
-        self.assertContains(admin_response, "РџРµСЂРµР№С‚Рё РІ РѕР±С‹С‡РЅС‹Р№ СЂРµР¶РёРј")
+        self.assertContains(admin_response, "Перейти в обычный режим")
 
     def test_admin_cannot_switch_interface_mode_with_invalid_password(self):
         self.client.force_login(self.admin)
@@ -1080,7 +1080,7 @@ class WebPagesTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "register.html")
-        self.assertContains(response, "Создание профиля")
+        self.assertContains(response, "Корпоративная почта")
         self.assertContains(response, "Зарегистрироваться")
 
     def test_login_page_is_rendered(self):
