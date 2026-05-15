@@ -17,18 +17,18 @@ def split_full_name(full_name):
 
 
 class LoginForm(forms.Form):
-    email = forms.EmailField(label="Email")
+    email = forms.CharField(label="Email или логин AD")
     password = forms.CharField(label="Пароль", widget=forms.PasswordInput)
 
     def clean(self):
         cleaned_data = super().clean()
-        email = cleaned_data.get("email")
+        identifier = cleaned_data.get("email")
         password = cleaned_data.get("password")
-        if email and password:
-            existing_user = User.objects.filter(email__iexact=email).first()
+        if identifier and password:
+            existing_user = User.objects.filter(email__iexact=identifier).first()
             if existing_user and existing_user.check_password(password) and not existing_user.is_active:
                 raise forms.ValidationError("Ваш аккаунт заблокирован. Вход в систему недоступен.")
-            self.user = authenticate(email=email, password=password)
+            self.user = authenticate(username=identifier, email=identifier, password=password)
             if self.user is None:
                 raise forms.ValidationError("Неверная почта или пароль.")
         return cleaned_data

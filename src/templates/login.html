@@ -33,8 +33,8 @@
             <form class="auth-form" method="post">
                 {% csrf_token %}
                 <label>
-                    <span>Email</span>
-                    <input type="email" name="email" value="{{ form.email.value|default:'' }}" placeholder="example@company.ru" required>
+                    <span>Email или логин AD</span>
+                    <input type="text" name="email" value="{{ form.email.value|default:'' }}" placeholder="example@company.ru или COMPANY\ivanov" required>
                 </label>
                 <label>
                     <span>Пароль</span>

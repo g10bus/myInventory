@@ -7,6 +7,8 @@
 .sidebar {
     position: sticky;
     top: 0;
+    z-index: 40;
+    isolation: isolate;
     width: 88px;
     height: 100vh;
     padding: 18px 12px;
@@ -88,6 +90,7 @@
 
 .sidebar-link {
     position: relative;
+    z-index: 1;
 }
 
 .sidebar-link::before,
@@ -97,6 +100,7 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.08s ease;
+    z-index: 80;
 }
 
 .sidebar-link::before {
@@ -204,6 +208,7 @@
     position: absolute;
     left: calc(100% + 14px);
     bottom: 0;
+    z-index: 80;
     width: 196px;
     padding: 12px;
     display: grid;

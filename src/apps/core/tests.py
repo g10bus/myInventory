@@ -371,6 +371,23 @@ class WebPagesTestCase(TestCase):
         self.assertContains(response, self.asset.title)
         self.assertContains(response, "Закреплено за мной")
 
+    def test_admin_can_open_analytics_page(self):
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse("analytics"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "analytics.html")
+        self.assertContains(response, "Аналитика и контроль")
+        self.assertContains(response, "Распределение ТМЦ по статусам")
+
+    def test_regular_user_cannot_open_analytics_page(self):
+        self.client.force_login(self.employee)
+
+        response = self.client.get(reverse("analytics"))
+
+        self.assertEqual(response.status_code, 403)
+
     def test_mytmc_page_is_rendered(self):
         self.client.force_login(self.employee)
 

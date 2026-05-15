@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.org",
     "apps.accounts",
+    "apps.integrations",
     "apps.inventory",
     "apps.custody",
     "apps.audit",
@@ -89,6 +90,7 @@ TEMPLATES = [
 
 AUTH_USER_MODEL = "accounts.User"
 AUTHENTICATION_BACKENDS = [
+    "apps.integrations.backends.ActiveDirectoryBackend",
     "apps.accounts.backends.EmailBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]

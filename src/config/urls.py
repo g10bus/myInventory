@@ -12,6 +12,7 @@ urlpatterns = [
     path("", include("apps.custody.urls")),
     path("", include("apps.accounts.urls")),
     path("", include("apps.org.urls")),
+    path("", include("apps.integrations.urls")),
 ]
 
 if settings.DEBUG or getattr(settings, "SERVE_MEDIA", False):

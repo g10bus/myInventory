@@ -8,12 +8,28 @@
     .hero-card,
     .stats-grid,
     .summary-strip,
+    .analytics-kpi-grid,
+    .analytics-grid,
     .content-grid,
     .asset-grid,
     .details-grid,
     .filters-row,
     .form-grid {
         grid-template-columns: 1fr;
+    }
+
+    .integrations-actions-row {
+        grid-template-columns: 1fr;
+    }
+
+    .donut-layout,
+    .line-chart-labels,
+    .trend-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .trend-bars {
+        height: 120px;
     }
 
     .timeline-item {

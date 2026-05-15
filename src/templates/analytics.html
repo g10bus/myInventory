@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Аналитика{% endblock %}
+
+{% block content %}
+<section class="hero-card">
+    <div>
+        <p class="eyebrow">Административная аналитика</p>
+        <h1>Аналитика и контроль</h1>
+        <p class="hero-copy">
+            Раздел показывает сводные показатели по состоянию ТМЦ, движению имущества, инвентаризациям и
+            загрузке подразделений. Он помогает администратору быстро увидеть пики активности, дисбаланс
+            между отделами и проблемные зоны, требующие вмешательства.
+        </p>
+    </div>
+    <div class="hero-side-note">
+        <span>Фокус дня</span>
+        <strong>{{ analytics_kpis.2.value }} просроченных сверок</strong>
+        <p>Заявок на передачу в работе: {{ analytics_kpis.3.value }}.</p>
+    </div>
+</section>
+
+<section class="analytics-kpi-grid">
+    {% for item in analytics_kpis %}
+        <article class="summary-card analytics-kpi-card">
+            <span class="summary-label">{{ item.label }}</span>
+            <strong>{{ item.value }}</strong>
+            <p>{{ item.hint }}</p>
+        </article>
+    {% endfor %}
+</section>
+
+<section class="analytics-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>{{ asset_status_chart.title }}</h2>
+            </div>
+            <span class="pill">{{ asset_status_chart.total }}</span>
+        </div>
+        <div class="donut-layout">
+            <div class="donut-chart" style="background: {{ asset_status_chart.style }};">
+                <div class="donut-center">
+                    <strong>{{ asset_status_chart.total }}</strong>
+                    <span>ТМЦ</span>
+                </div>
+            </div>
+            <div class="chart-legend">
+                {% for item in asset_status_chart.items %}
+                    <div class="chart-legend-item">
+                        <span class="chart-legend-dot" style="background: {{ item.color }};"></span>
+                        <div>
+                            <strong>{{ item.label }}</strong>
+                            <p>{{ item.share }}%</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>{{ transfer_status_chart.title }}</h2>
+            </div>
+            <span class="pill">{{ transfer_status_chart.total }}</span>
+        </div>
+        <div class="donut-layout">
+            <div class="donut-chart donut-chart-small" style="background: {{ transfer_status_chart.style }};">
+                <div class="donut-center">
+                    <strong>{{ transfer_status_chart.total }}</strong>
+                    <span>заявок</span>
+                </div>
+            </div>
+            <div class="chart-legend">
+                {% for item in transfer_status_chart.items %}
+                    <div class="chart-legend-item">
+                        <span class="chart-legend-dot" style="background: {{ item.color }};"></span>
+                        <div>
+                            <strong>{{ item.label }}</strong>
+                            <p>{{ item.share }}%</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </article>
+</section>
+
+<section class="analytics-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Категории ТМЦ</h2>
+                <p class="muted-text">Какие категории имущества преобладают в системе.</p>
+            </div>
+        </div>
+        <div class="metric-bars">
+            {% for row in category_rows %}
+                <div class="metric-bar-row">
+                    <div class="metric-bar-top">
+                        <strong>{{ row.category }}</strong>
+                        <span>{{ row.share }}%</span>
+                    </div>
+                    <div class="metric-bar-track">
+                        <div class="metric-bar-fill" style="width: {{ row.width }}%;"></div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>Нет данных по категориям</h3>
+                    <p>После добавления ТМЦ здесь появится распределение по категориям.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Нагрузка по отделам</h2>
+                <p class="muted-text">Текущие активные закрепления имущества за подразделениями.</p>
+            </div>
+        </div>
+        <div class="metric-bars">
+            {% for row in department_rows %}
+                <div class="metric-bar-row">
+                    <div class="metric-bar-top">
+                        <strong>{{ row.label }}</strong>
+                        <span>{{ row.share }}%</span>
+                    </div>
+                    <div class="metric-bar-track metric-bar-track-soft">
+                        <div class="metric-bar-fill metric-bar-fill-green" style="width: {{ row.width }}%;"></div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-state">
+                    <h3>Пока нет активных закреплений</h3>
+                    <p>После выдачи имущества сотрудникам здесь появится разбивка по отделам.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="analytics-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Динамика передач</h2>
+                <p class="muted-text">Запрошенные и завершенные передачи за последние 6 месяцев.</p>
+            </div>
+        </div>
+        <div class="trend-columns">
+            {% for month in transfer_activity %}
+                <div class="trend-column">
+                    <div class="trend-bars">
+                        <div class="trend-bar trend-bar-requested" style="height: {{ month.requested_height }}%;"></div>
+                        <div class="trend-bar trend-bar-completed" style="height: {{ month.completed_height }}%;"></div>
+                    </div>
+                    <strong>{{ month.label }}</strong>
+                    <p>{{ month.requested_total }} / {{ month.completed_total }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="chart-footnote">
+            <span class="chart-key chart-key-requested"></span>Запрошено
+            <span class="chart-key chart-key-completed"></span>Завершено
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Тренд инвентаризаций</h2>
+                <p class="muted-text">Количество подтвержденных сверок по месяцам.</p>
+            </div>
+            <span class="pill">{{ verification_trend_max }}</span>
+        </div>
+        <div class="line-chart-shell">
+            <svg viewBox="0 0 320 160" class="line-chart" aria-label="Тренд инвентаризаций">
+                <polyline class="line-chart-path" points="{{ verification_trend_points }}"></polyline>
+                {% for point in verification_trend %}
+                    <circle class="line-chart-dot" cx="{{ point.x }}" cy="{{ point.y }}" r="4"></circle>
+                {% endfor %}
+            </svg>
+            <div class="line-chart-labels">
+                {% for point in verification_trend %}
+                    <div>
+                        <strong>{{ point.label }}</strong>
+                        <p>{{ point.value }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </article>
+</section>
+{% endblock %}

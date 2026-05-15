@@ -60,3 +60,10 @@ make shell
 make backup
 make restore FILE=./var/backups/backup.sql
 ```
+
+## Integrations
+
+- `integrations/manage/` - административная страница настройки 1С и Active Directory.
+- `python manage.py sync_one_c_data` - ручной запуск синхронизации отделов, сотрудников и ТМЦ из 1С.
+- `python manage.py test_active_directory_connection` - проверка подключения к LDAP/Active Directory.
+- Форма входа поддерживает как локальный email, так и доменный логин Active Directory.

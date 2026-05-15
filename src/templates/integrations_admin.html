@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Интеграции{% endblock %}
+
+{% block content %}
+<section class="hero-card hero-card-compact">
+    <div>
+        <p class="eyebrow">Интеграционный контур</p>
+        <h1>1С и Active Directory</h1>
+        <p class="hero-copy">
+            Здесь администратор настраивает обмен данными с 1С и подключение к Active Directory. 1С используется
+            для загрузки отделов, сотрудников и ТМЦ, а Active Directory - для корпоративной аутентификации и
+            автоматического обновления профиля пользователя при входе.
+        </p>
+    </div>
+</section>
+
+<section class="content-grid">
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Настройки 1С</h2>
+                <p class="muted-text">Синхронизация справочников и карточек ТМЦ через HTTP API.</p>
+            </div>
+            <span class="status-badge {% if one_c_settings.enabled %}status-in_use{% else %}status-reserve{% endif %}">
+                {% if one_c_settings.enabled %}Активна{% else %}Выключена{% endif %}
+            </span>
+        </div>
+        <form class="form-grid" method="post" id="onec-settings-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_onec">
+            {% for field in one_c_form %}
+                <label class="field-group {% if field.name == 'base_url' or field.name == 'departments_endpoint' or field.name == 'employees_endpoint' or field.name == 'assets_endpoint' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small class="table-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in one_c_form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+        </form>
+        <div class="actions-row integrations-actions-row">
+            <div class="integrations-action-form">
+                <button class="primary-button" type="submit" form="onec-settings-form">Сохранить настройки 1С</button>
+            </div>
+            <form class="integrations-action-form" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="sync_onec">
+                <button class="secondary-button" type="submit">Запустить синхронизацию 1С</button>
+                {% if one_c_settings.last_synced_at %}
+                    <p class="table-muted">Последняя синхронизация: {{ one_c_settings.last_synced_at|date:"d.m.Y H:i" }}</p>
+                {% endif %}
+            </form>
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-header">
+            <div>
+                <h2>Настройки Active Directory</h2>
+                <p class="muted-text">Корпоративный вход и подтягивание профиля пользователя из LDAP.</p>
+            </div>
+            <span class="status-badge {% if active_directory_settings.enabled %}status-in_use{% else %}status-reserve{% endif %}">
+                {% if active_directory_settings.enabled %}Активна{% else %}Выключена{% endif %}
+            </span>
+        </div>
+        <form class="form-grid" method="post" id="ad-settings-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_ad">
+            {% for field in active_directory_form %}
+                <label class="field-group {% if field.name == 'server_uri' or field.name == 'base_dn' or field.name == 'bind_dn' or field.name == 'user_search_filter' %}field-group-full{% endif %}">
+                    <span>{{ field.label }}</span>
+                    {{ field }}
+                    {% for error in field.errors %}
+                        <span class="field-error">{{ error }}</span>
+                    {% endfor %}
+                </label>
+            {% endfor %}
+            {% for error in active_directory_form.non_field_errors %}
+                <span class="field-error field-group-full">{{ error }}</span>
+            {% endfor %}
+        </form>
+        <div class="actions-row integrations-actions-row">
+            <div class="integrations-action-form">
+                <button class="primary-button" type="submit" form="ad-settings-form">Сохранить настройки AD</button>
+            </div>
+            <form class="integrations-action-form" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="test_ad">
+                <button class="secondary-button" type="submit">Проверить подключение AD</button>
+                {% if active_directory_settings.last_connection_check_at %}
+                    <p class="table-muted">Последняя проверка: {{ active_directory_settings.last_connection_check_at|date:"d.m.Y H:i" }}</p>
+                {% endif %}
+            </form>
+        </div>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h2>Журнал интеграций</h2>
+            <p class="muted-text">Последние операции синхронизации и проверки подключения.</p>
+        </div>
+        <span class="pill">{{ recent_logs|length }}</span>
+    </div>
+    <div class="list-stack">
+        {% for log in recent_logs %}
+            <div class="list-item">
+                <div>
+                    <strong>{{ log.get_integration_type_display }} - {{ log.action|default:"операция" }}</strong>
+                    <p>{{ log.message|default:"Операция завершена без текстового комментария." }}</p>
+                    <p class="table-muted">
+                        {{ log.started_at|date:"d.m.Y H:i" }}
+                        {% if log.triggered_by %} - {{ log.triggered_by.short_name }}{% endif %}
+                    </p>
+                </div>
+                <span class="status-badge {% if log.status == 'success' %}status-completed{% elif log.status == 'failed' %}status-broken{% else %}status-pending{% endif %}">
+                    {{ log.get_status_display }}
+                </span>
+            </div>
+        {% empty %}
+            <div class="empty-state">
+                <h3>Журнал пока пуст</h3>
+                <p>После проверки Active Directory или синхронизации 1С здесь появятся записи.</p>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
