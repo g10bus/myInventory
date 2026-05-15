@@ -1,8 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 
+from apps.core.access import admin_required
 from apps.custody.forms import AdminTransferRequestForm, AssetIssueForm, AssetReturnForm, TransferRequestForm
 from apps.custody.models import TransferRequest
 from apps.custody.reports import (
@@ -20,11 +20,6 @@ from apps.custody.services import (
     return_asset,
 )
 from apps.inventory.models import Asset
-
-
-def ensure_administrator(user):
-    if not user.is_administrator:
-        raise PermissionDenied("Доступ разрешен только администраторам.")
 
 
 @login_required
@@ -102,8 +97,8 @@ def transfers_view(request):
 
 
 @login_required
+@admin_required
 def custody_admin_view(request):
-    ensure_administrator(request.user)
     context = get_custody_admin_context()
 
     issue_form = AssetIssueForm(

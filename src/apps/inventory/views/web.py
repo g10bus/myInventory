@@ -1,20 +1,16 @@
-from datetime import date
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 
-from apps.audit.models import AuditEvent
+from apps.core.access import admin_required, post_only
 from apps.inventory.forms import (
     AssetAdminForm,
     EmployeeInventoryAssignmentForm,
     InventoryVerificationCreateForm,
 )
-from apps.inventory.models import Asset, InventoryVerification
+from apps.inventory.models import Asset
 from apps.inventory.services import (
     create_asset,
     create_employee_inventory_assignment,
@@ -22,9 +18,14 @@ from apps.inventory.services import (
     revoke_employee_inventory_assignment,
     update_asset_details,
 )
+from apps.inventory.ui import (
+    annotate_inventory_verification_status,
+    build_verification_form_initial,
+    build_verification_records,
+    resolve_inventory_window,
+)
 
 from ..selectors import (
-    get_active_inventory_assignment,
     get_all_assets,
     get_asset_category_choices,
     get_asset_employee_choices,
@@ -33,225 +34,7 @@ from ..selectors import (
     get_employee_inventory_assignment_choices,
     get_employee_inventory_assignments,
     get_user_assets,
-    get_user_inventory_assignments,
 )
-
-
-def ensure_administrator(user):
-    if not user.is_administrator:
-        raise PermissionDenied("Доступ разрешен только администраторам.")
-
-
-def build_verification_records(asset):
-    current_assignment = asset.current_assignment
-    records = []
-
-    verification_records = (
-        asset.verification_records.select_related("verified_by", "responsible_employee")
-        .prefetch_related("images")
-        .order_by("-verified_at", "-created_at")[:5]
-    )
-
-    for verification in verification_records:
-        primary_image = verification.images.first()
-        records.append(
-            {
-                "occurred_at": verification.verified_at,
-                "verified_by": verification.verified_by.full_name if verification.verified_by else "Не указан",
-                "responsible_person": (
-                    verification.responsible_employee.full_name
-                    if verification.responsible_employee
-                    else current_assignment.employee.full_name
-                    if current_assignment
-                    else "Не назначен"
-                ),
-                "location": verification.location or asset.location,
-                "next_verification_date": verification.next_verification_date,
-                "message": verification.notes or "Комментарий к фиксации не добавлен.",
-                "image_url": primary_image.image.url if primary_image else "",
-                "image_caption": primary_image.caption if primary_image else "",
-                "images_count": verification.images.count(),
-            }
-        )
-
-    if records:
-        return records
-
-    verification_events = (
-        asset.audit_events.filter(event_type=AuditEvent.EventType.ASSET_VERIFIED)
-        .select_related("actor", "related_user")
-        .order_by("-occurred_at")[:5]
-    )
-
-    for event in verification_events:
-        metadata = event.metadata if isinstance(event.metadata, dict) else {}
-        next_verification_date = None
-        raw_next_verification_date = metadata.get("next_verification_date")
-
-        if raw_next_verification_date:
-            try:
-                next_verification_date = date.fromisoformat(raw_next_verification_date)
-            except ValueError:
-                next_verification_date = None
-
-        location = metadata.get("location") or asset.location
-        if not location and current_assignment:
-            location = current_assignment.location_at_issue
-
-        records.append(
-            {
-                "occurred_at": event.occurred_at,
-                "verified_by": event.actor.full_name if event.actor else "Не указан",
-                "responsible_person": (
-                    event.related_user.full_name
-                    if event.related_user
-                    else current_assignment.employee.full_name
-                    if current_assignment
-                    else "Не назначен"
-                ),
-                "location": location,
-                "next_verification_date": next_verification_date,
-                "message": event.message,
-                "image_url": "",
-                "image_caption": "",
-                "images_count": 0,
-            }
-        )
-
-    if not records and asset.last_verified_at:
-        records.append(
-            {
-                "occurred_at": asset.last_verified_at,
-                "verified_by": "Не указан",
-                "responsible_person": current_assignment.employee.full_name if current_assignment else "Не назначен",
-                "location": asset.location,
-                "next_verification_date": asset.next_verification_date,
-                "message": "Данная запись создана автоматически.",
-                "image_url": "",
-                "image_caption": "",
-                "images_count": 0,
-            }
-        )
-
-    return records
-
-
-def build_verification_form_initial(asset):
-    current_assignment = asset.current_assignment
-    location = asset.location
-    if not location and current_assignment:
-        location = current_assignment.location_at_issue
-
-    return {
-        "location": location,
-    }
-
-
-def resolve_inventory_window(user):
-    assignments = get_user_inventory_assignments(user)
-    active_assignment = get_active_inventory_assignment(user)
-
-    if active_assignment:
-        return {
-            "verification_allowed": True,
-            "active_inventory_assignment": active_assignment,
-            "verification_lock_message": "",
-        }
-
-    upcoming_assignment = assignments.filter(date_from__gt=timezone.localdate()).first()
-    if upcoming_assignment:
-        return {
-            "verification_allowed": False,
-            "active_inventory_assignment": None,
-            "verification_lock_message": (
-                f"Инвентаризация будет доступна с {upcoming_assignment.date_from:%d.%m.%Y} "
-                f"по {upcoming_assignment.date_to:%d.%m.%Y}."
-            ),
-        }
-
-    expired_assignment = assignments.filter(date_to__lt=timezone.localdate()).order_by("-date_to").first()
-    if expired_assignment:
-        return {
-            "verification_allowed": False,
-            "active_inventory_assignment": None,
-            "verification_lock_message": (
-                f"Назначенный период инвентаризации завершился {expired_assignment.date_to:%d.%m.%Y}. "
-                "Дождитесь нового назначения администратора."
-            ),
-        }
-
-    return {
-        "verification_allowed": False,
-        "active_inventory_assignment": None,
-        "verification_lock_message": (
-            "Инвентаризация пока не назначена администратором. "
-            "Проведение сверки откроется только в утвержденный период."
-        ),
-    }
-
-
-def resolve_inventory_window(user):
-    assignments = get_user_inventory_assignments(user)
-    has_assignments = assignments.exists()
-    active_assignment = get_active_inventory_assignment(user)
-
-    if not has_assignments:
-        return {
-            "verification_allowed": False,
-            "active_inventory_assignment": None,
-            "verification_lock_message": (
-                "Инвентаризация пока не назначена администратором. "
-                "Проведение сверки откроется только в утвержденный период."
-            ),
-            "upcoming_inventory_assignment": None,
-        }
-
-    upcoming_assignment = assignments.filter(date_from__gt=timezone.localdate()).first()
-    if active_assignment:
-        return {
-            "verification_allowed": True,
-            "active_inventory_assignment": active_assignment,
-            "verification_lock_message": "",
-            "upcoming_inventory_assignment": upcoming_assignment,
-        }
-
-    if upcoming_assignment:
-        lock_message = (
-            f"Инвентаризация будет доступна с {upcoming_assignment.date_from:%d.%m.%Y} "
-            f"по {upcoming_assignment.date_to:%d.%m.%Y}."
-        )
-    else:
-        last_assignment = assignments.filter(date_to__lt=timezone.localdate()).order_by("-date_to").first()
-        if last_assignment:
-            lock_message = (
-                f"Назначенный период инвентаризации завершился {last_assignment.date_to:%d.%m.%Y}. "
-                "Дождитесь нового назначения администратора."
-            )
-        else:
-            lock_message = "Проведение инвентаризации сейчас недоступно."
-
-    return {
-        "verification_allowed": False,
-        "active_inventory_assignment": None,
-        "verification_lock_message": lock_message,
-        "upcoming_inventory_assignment": upcoming_assignment,
-    }
-
-
-def annotate_inventory_verification_status(assets, *, user, active_assignment):
-    if not active_assignment:
-        return assets
-
-    verification_subquery = InventoryVerification.objects.filter(
-        asset=OuterRef("pk"),
-        responsible_employee=user,
-        verified_at__date__gte=active_assignment.date_from,
-        verified_at__date__lte=active_assignment.date_to,
-    )
-
-    return assets.annotate(
-        has_inventory_verification_in_period=Exists(verification_subquery),
-    )
 
 
 @login_required
@@ -332,8 +115,8 @@ def my_asset_detail_view(request, inventory_number):
 
 
 @login_required
+@admin_required
 def asset_admin_view(request):
-    ensure_administrator(request.user)
     query = request.GET.get("q", "").strip()
     status = request.GET.get("status", "").strip()
     category = request.GET.get("category", "").strip()
@@ -377,8 +160,8 @@ def asset_admin_view(request):
 
 
 @login_required
+@admin_required
 def inventory_assignment_admin_view(request):
-    ensure_administrator(request.user)
     employee_query = request.GET.get("employee_q", "").strip()
     employee_choices = get_employee_inventory_assignment_choices()
     form = EmployeeInventoryAssignmentForm(
@@ -417,11 +200,9 @@ def inventory_assignment_admin_view(request):
 
 
 @login_required
+@admin_required
+@post_only
 def inventory_assignment_revoke_view(request, assignment_id):
-    ensure_administrator(request.user)
-    if request.method != "POST":
-        raise PermissionDenied("Р”РѕСЃС‚СѓРї СЂР°Р·СЂРµС€РµРЅ С‚РѕР»СЊРєРѕ РґР»СЏ POST-Р·Р°РїСЂРѕСЃРѕРІ.")
-
     assignment = get_object_or_404(get_employee_inventory_assignments(), pk=assignment_id)
     if assignment.revoked_at:
         messages.info(request, "Назначение уже было отозвано ранее.")
@@ -439,8 +220,8 @@ def inventory_assignment_revoke_view(request, assignment_id):
 
 
 @login_required
+@admin_required
 def asset_create_view(request):
-    ensure_administrator(request.user)
     form = AssetAdminForm(request.POST or None)
 
     if request.method == "POST":
@@ -464,8 +245,8 @@ def asset_create_view(request):
 
 
 @login_required
+@admin_required
 def asset_edit_view(request, asset_id):
-    ensure_administrator(request.user)
     asset = get_object_or_404(get_all_assets(), pk=asset_id)
     form = AssetAdminForm(instance=asset)
 

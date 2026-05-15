@@ -1,8 +1,8 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 
+from apps.core.access import admin_required
 from apps.integrations.forms import ActiveDirectorySettingsForm, OneCIntegrationSettingsForm
 from apps.integrations.models import ActiveDirectorySettings, IntegrationSyncLog, OneCIntegrationSettings
 from apps.integrations.services.active_directory import (
@@ -14,16 +14,9 @@ from apps.integrations.services.one_c import (
     sync_one_c_data,
 )
 
-
-def ensure_administrator(user):
-    if not user.is_administrator:
-        raise PermissionDenied("Доступ разрешен только администраторам.")
-
-
 @login_required
+@admin_required
 def integrations_admin_view(request):
-    ensure_administrator(request.user)
-
     one_c_settings = OneCIntegrationSettings.load()
     active_directory_settings = ActiveDirectorySettings.load()
     one_c_form = OneCIntegrationSettingsForm(instance=one_c_settings, prefix="onec")

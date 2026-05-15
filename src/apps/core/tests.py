@@ -1,18 +1,61 @@
 from datetime import date, timedelta
+from types import SimpleNamespace
 
 from django.contrib.auth.models import Group
+from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.http import HttpResponse
+from django.test import RequestFactory, SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.audit.models import AuditEvent
+from apps.core.access import admin_required, post_only
 from apps.custody.models import TransferRequest
 from apps.custody.services import issue_asset, request_transfer, return_asset
 from apps.inventory.models import Asset, EmployeeInventoryAssignment, InventoryVerification
 from apps.inventory.services import record_verification
 from apps.org.models import Department
+
+
+class AccessDecoratorsTestCase(SimpleTestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    def test_admin_required_allows_administrator(self):
+        @admin_required
+        def protected_view(request):
+            return HttpResponse("ok")
+
+        request = self.factory.get("/protected/")
+        request.user = SimpleNamespace(is_administrator=True)
+
+        response = protected_view(request)
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_required_rejects_non_administrator(self):
+        @admin_required
+        def protected_view(request):
+            return HttpResponse("ok")
+
+        request = self.factory.get("/protected/")
+        request.user = SimpleNamespace(is_administrator=False)
+
+        with self.assertRaisesMessage(PermissionDenied, "Доступ разрешен только администраторам."):
+            protected_view(request)
+
+    def test_post_only_rejects_non_post_requests(self):
+        @post_only
+        def protected_view(request):
+            return HttpResponse("ok")
+
+        request = self.factory.get("/protected/")
+        request.user = SimpleNamespace(is_administrator=True)
+
+        with self.assertRaisesMessage(PermissionDenied, "Доступ разрешен только для POST-запросов."):
+            protected_view(request)
 
 
 class WebUserFlowsTestCase(TestCase):

@@ -4,12 +4,12 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
 
 from apps.accounts.selectors import get_manageable_users
+from apps.core.access import admin_required, ensure_administrator, post_only
 from apps.custody.models import AssetAssignment, TransferRequest
 from apps.org.models import Department
 
@@ -22,11 +22,6 @@ from ..forms import (
     UserAdminManageForm,
 )
 from ..ui import ADMIN_UI_MODE, set_user_interface_mode
-
-
-def ensure_administrator(user):
-    if not user.is_administrator:
-        raise PermissionDenied("Доступ разрешён только администраторам.")
 
 
 def resolve_safe_next_url(request, next_url):
@@ -121,10 +116,8 @@ def profile_view(request):
 
 
 @login_required
+@post_only(message="Смена режима интерфейса доступна только через POST-запрос.")
 def switch_ui_mode_view(request):
-    if request.method != "POST":
-        raise PermissionDenied("Смена режима интерфейса доступна только через POST-запрос.")
-
     requested_mode = request.POST.get("mode")
     next_url = resolve_safe_next_url(request, request.POST.get("next", ""))
 
@@ -139,8 +132,8 @@ def switch_ui_mode_view(request):
 
 
 @login_required
+@admin_required(message="Доступ разрешён только администраторам.")
 def confirm_admin_ui_mode_view(request):
-    ensure_administrator(request.user)
     next_url = resolve_safe_next_url(request, request.POST.get("next") or request.GET.get("next", ""))
     form = AdminModeConfirmationForm(user=request.user)
 
@@ -165,8 +158,8 @@ def confirm_admin_ui_mode_view(request):
 
 
 @login_required
+@admin_required(message="Доступ разрешён только администраторам.")
 def user_admin_view(request):
-    ensure_administrator(request.user)
     query = request.GET.get("q", "").strip()
     department = request.GET.get("department", "").strip()
     activity = request.GET.get("activity", "").strip()
@@ -200,8 +193,8 @@ def user_admin_view(request):
 
 
 @login_required
+@admin_required(message="Доступ разрешён только администраторам.")
 def user_edit_view(request, user_id):
-    ensure_administrator(request.user)
     managed_user = get_object_or_404(get_manageable_users(actor=request.user), pk=user_id)
     current_assignments = (
         AssetAssignment.objects.filter(employee=managed_user, is_current=True)

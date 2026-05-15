@@ -1,21 +1,15 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
 
+from apps.core.access import admin_required
 from apps.org.forms import DepartmentCreateForm, LocationCreateForm
 from apps.org.models import Department, Location
 
 
-def ensure_administrator(user):
-    if not user.is_administrator:
-        raise PermissionDenied("Доступ разрешен только администраторам.")
-
-
 @login_required
+@admin_required
 def org_admin_view(request):
-    ensure_administrator(request.user)
-
     location_form = LocationCreateForm(prefix="location")
     department_form = DepartmentCreateForm(prefix="department")
 
